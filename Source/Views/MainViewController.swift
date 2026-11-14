@@ -1,6 +1,6 @@
 import UIKit
 
-/// Màn hình điều khiển chính ZevCheatiOS chuẩn phong cách Aurora với 3 Tab: Trang chủ - DNS Proxy - Cài đặt
+/// Màn hình điều khiển chính ZevCheatiOS chuẩn phong cách Aurora (Code Icons thuần túy, không dùng Emoji, không chú thích ngoặc đơn thừa)
 public final class MainViewController: UIViewController {
 
     private let key: String
@@ -34,7 +34,7 @@ public final class MainViewController: UIViewController {
     private let gameSegment = UISegmentedControl(items: ["Free Fire", "Free Fire MAX"])
     private let featuresStack = UIStackView()
     private var cardViews: [FeatureCardView] = []
-    private let injectButton = NeonButton(title: "💉 INJECTOR VÀO GAME")
+    private let injectButton = NeonButton(title: "INJECTOR")
     private var isInjected: Bool = false
 
     // DNS components
@@ -43,15 +43,15 @@ public final class MainViewController: UIViewController {
     private let dnsBadgeIcon = UIImageView()
     private let dnsBadgeLabel = UILabel()
     private let dnsDescLabel = UILabel()
-    private let installDNSBtn = NeonButton(title: "📥 CÀI PROFILE DNS (.MOBILECONFIG)")
+    private let installDNSBtn = NeonButton(title: "CÀI PROFILE DNS")
     private let checkDNSBtn = UIButton(type: .system)
     private let resetGuestBtn = UIButton(type: .system)
 
     // Settings components
     private let supportCard = UIView()
     private let supportTitle = UILabel()
-    private let telegramBtn = NeonButton(title: "💬 VÀO TELEGRAM CỘNG ĐỒNG")
-    private let zaloBtn = NeonButton(title: "💬 CHAT ZALO HỖ TRỢ: 0365829172")
+    private let telegramBtn = NeonButton(title: "TELEGRAM CỘNG ĐỒNG")
+    private let zaloBtn = NeonButton(title: "ZALO HỖ TRỢ")
     private let infoCard = UIView()
     private let infoTitle = UILabel()
     private let hwidLabel = UILabel()
@@ -155,7 +155,7 @@ public final class MainViewController: UIViewController {
         vipPill.textAlignment = .center
         headerView.addSubview(vipPill)
 
-        // License Card: Hiện Phiên bản iOS, Thiết bị và Thời gian hạn dùng
+        // License Card: Thiết bị, Phiên bản iOS và Thời gian hạn dùng (Không dùng Emoji)
         licenseCard.translatesAutoresizingMaskIntoConstraints = false
         licenseCard.backgroundColor = Theme.card
         licenseCard.layer.cornerRadius = 16
@@ -164,13 +164,13 @@ public final class MainViewController: UIViewController {
         contentView.addSubview(licenseCard)
 
         deviceModelLabel.translatesAutoresizingMaskIntoConstraints = false
-        deviceModelLabel.text = "📱 THIẾT BỊ: \(UIDevice.current.modelName)"
+        deviceModelLabel.text = "THIẾT BỊ: \(UIDevice.current.modelName)"
         deviceModelLabel.font = .monospacedSystemFont(ofSize: 12, weight: .bold)
         deviceModelLabel.textColor = Theme.text
         licenseCard.addSubview(deviceModelLabel)
 
         osVersionLabel.translatesAutoresizingMaskIntoConstraints = false
-        osVersionLabel.text = "⚙️ HỆ ĐIỀU HÀNH: iOS \(UIDevice.current.systemVersion)"
+        osVersionLabel.text = "HỆ ĐIỀU HÀNH: iOS \(UIDevice.current.systemVersion)"
         osVersionLabel.font = .monospacedSystemFont(ofSize: 11, weight: .medium)
         osVersionLabel.textColor = Theme.accentLight
         licenseCard.addSubview(osVersionLabel)
@@ -178,7 +178,7 @@ public final class MainViewController: UIViewController {
         countdownLabel.translatesAutoresizingMaskIntoConstraints = false
         countdownLabel.font = .monospacedSystemFont(ofSize: 13, weight: .heavy)
         countdownLabel.textColor = Theme.success
-        countdownLabel.text = "⏳ HẠN DÙNG: ĐANG TẢI..."
+        countdownLabel.text = "HẠN DÙNG: ĐANG TẢI..."
         licenseCard.addSubview(countdownLabel)
 
         // 4. Tab Segmented Control (Trang chủ - DNS Proxy - Cài đặt)
@@ -249,7 +249,7 @@ public final class MainViewController: UIViewController {
         ])
     }
 
-    // MARK: - Tab 0: Trang Chủ (Nạp Cache Game)
+    // MARK: - Tab 0: Trang Chủ
     private func setupHomePage() {
         homePage.translatesAutoresizingMaskIntoConstraints = false
         tabContainer.addSubview(homePage)
@@ -268,8 +268,11 @@ public final class MainViewController: UIViewController {
         featuresStack.spacing = 10
         homePage.addSubview(featuresStack)
 
-        // Nút Injector với icon cây tiêm 💉
+        // Nút Injector với Code Icon SF Symbol "syringe.fill"
         injectButton.translatesAutoresizingMaskIntoConstraints = false
+        injectButton.setImage(UIImage(systemName: "syringe.fill"), for: .normal)
+        injectButton.tintColor = .white
+        injectButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
         injectButton.addTarget(self, action: #selector(handleInjectOrUninjectTapped), for: .touchUpInside)
         homePage.addSubview(injectButton)
 
@@ -342,11 +345,17 @@ public final class MainViewController: UIViewController {
         dnsStatusCard.addSubview(dnsDescLabel)
 
         installDNSBtn.translatesAutoresizingMaskIntoConstraints = false
+        installDNSBtn.setImage(UIImage(systemName: "arrow.down.doc.fill"), for: .normal)
+        installDNSBtn.tintColor = .white
+        installDNSBtn.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
         installDNSBtn.addTarget(self, action: #selector(handleInstallDNS), for: .touchUpInside)
         dnsPage.addSubview(installDNSBtn)
 
         checkDNSBtn.translatesAutoresizingMaskIntoConstraints = false
         checkDNSBtn.setTitle(LanguageManager.shared.tr("dns_check_button"), for: .normal)
+        checkDNSBtn.setImage(UIImage(systemName: "checkmark.shield.fill"), for: .normal)
+        checkDNSBtn.tintColor = Theme.accentLight
+        checkDNSBtn.imageEdgeInsets = UIEdgeInsets(top: 0, left: -6, bottom: 0, right: 6)
         checkDNSBtn.titleLabel?.font = .systemFont(ofSize: 13, weight: .bold)
         checkDNSBtn.setTitleColor(Theme.accentLight, for: .normal)
         checkDNSBtn.backgroundColor = Theme.card
@@ -358,6 +367,9 @@ public final class MainViewController: UIViewController {
 
         resetGuestBtn.translatesAutoresizingMaskIntoConstraints = false
         resetGuestBtn.setTitle(LanguageManager.shared.tr("reset_guest"), for: .normal)
+        resetGuestBtn.setImage(UIImage(systemName: "trash.fill"), for: .normal)
+        resetGuestBtn.tintColor = Theme.danger
+        resetGuestBtn.imageEdgeInsets = UIEdgeInsets(top: 0, left: -6, bottom: 0, right: 6)
         resetGuestBtn.titleLabel?.font = .systemFont(ofSize: 13, weight: .bold)
         resetGuestBtn.setTitleColor(Theme.danger, for: .normal)
         resetGuestBtn.backgroundColor = Theme.card
@@ -423,7 +435,7 @@ public final class MainViewController: UIViewController {
         ])
     }
 
-    // MARK: - Tab 2: Cài Đặt (Hỗ trợ Telegram, Zalo & Ngôn ngữ)
+    // MARK: - Tab 2: Cài Đặt (Code Icons, không dùng Emoji, không chú thích ngoặc đơn)
     private func setupSettingsPage() {
         settingsPage.translatesAutoresizingMaskIntoConstraints = false
         tabContainer.addSubview(settingsPage)
@@ -442,14 +454,20 @@ public final class MainViewController: UIViewController {
         supportCard.addSubview(supportTitle)
 
         telegramBtn.translatesAutoresizingMaskIntoConstraints = false
+        telegramBtn.setImage(UIImage(systemName: "paperplane.fill"), for: .normal)
+        telegramBtn.tintColor = .white
+        telegramBtn.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
         telegramBtn.addTarget(self, action: #selector(handleOpenTelegram), for: .touchUpInside)
         supportCard.addSubview(telegramBtn)
 
         zaloBtn.translatesAutoresizingMaskIntoConstraints = false
+        zaloBtn.setImage(UIImage(systemName: "message.fill"), for: .normal)
+        zaloBtn.tintColor = .white
+        zaloBtn.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
         zaloBtn.addTarget(self, action: #selector(handleOpenZalo), for: .touchUpInside)
         supportCard.addSubview(zaloBtn)
 
-        // 2. Info Card (Thiết bị & HWID)
+        // 2. Info Card
         infoCard.translatesAutoresizingMaskIntoConstraints = false
         infoCard.backgroundColor = Theme.card
         infoCard.layer.cornerRadius = 16
@@ -471,19 +489,25 @@ public final class MainViewController: UIViewController {
         hwidLabel.addGestureRecognizer(copyHwidTap)
         infoCard.addSubview(hwidLabel)
 
-        // 3. Language Selector Pill Button
+        // 3. Language Selector Pill Button với SF Symbol "globe"
         langButton.translatesAutoresizingMaskIntoConstraints = false
         langButton.backgroundColor = Theme.card
         langButton.layer.cornerRadius = 14
         langButton.layer.borderWidth = 1.0
         langButton.layer.borderColor = Theme.cardStroke.cgColor
+        langButton.setImage(UIImage(systemName: "globe"), for: .normal)
+        langButton.tintColor = Theme.accentLight
+        langButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
         langButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
         langButton.setTitleColor(Theme.text, for: .normal)
         langButton.addTarget(self, action: #selector(handleSelectLanguage), for: .touchUpInside)
         settingsPage.addSubview(langButton)
 
-        // 4. Logout Button
+        // 4. Logout Button với SF Symbol "rectangle.portrait.and.arrow.right.fill"
         logoutBtn.translatesAutoresizingMaskIntoConstraints = false
+        logoutBtn.setImage(UIImage(systemName: "rectangle.portrait.and.arrow.right.fill"), for: .normal)
+        logoutBtn.tintColor = Theme.danger
+        logoutBtn.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
         logoutBtn.titleLabel?.font = .systemFont(ofSize: 14, weight: .bold)
         logoutBtn.setTitleColor(Theme.danger, for: .normal)
         logoutBtn.backgroundColor = Theme.card
@@ -569,8 +593,10 @@ public final class MainViewController: UIViewController {
 
         if isInjected {
             injectButton.setTitle(lm.tr("uninject_button"), for: .normal)
+            injectButton.setImage(UIImage(systemName: "arrow.counterclockwise.circle.fill"), for: .normal)
         } else {
             injectButton.setTitle(lm.tr("inject_button"), for: .normal)
+            injectButton.setImage(UIImage(systemName: "syringe.fill"), for: .normal)
         }
 
         installDNSBtn.setTitle(lm.tr("dns_install_button"), for: .normal)
@@ -582,7 +608,7 @@ public final class MainViewController: UIViewController {
         zaloBtn.setTitle(lm.tr("open_zalo"), for: .normal)
 
         infoTitle.text = lm.tr("device_info")
-        hwidLabel.text = "MÃ THIẾT BỊ (HWID):\n\(APIService.shared.deviceHWID)\n(Chạm vào để sao chép)"
+        hwidLabel.text = "MÃ THIẾT BỊ:\n\(APIService.shared.deviceHWID)"
 
         langButton.setTitle(lm.current.displayName, for: .normal)
         logoutBtn.setTitle(lm.tr("logout"), for: .normal)
@@ -596,7 +622,6 @@ public final class MainViewController: UIViewController {
 
     // MARK: - DNS Status Check
     private func checkDNSStatus() {
-        // Tự động kiểm tra xem thiết bị đã cài DNS Profile hay chưa
         let isConfigured = UserDefaults.standard.bool(forKey: "zev.dns_installed")
 
         if isConfigured {
@@ -632,7 +657,7 @@ public final class MainViewController: UIViewController {
         checkDNSStatus()
         let alert = UIAlertController(
             title: "Trạng Thái DNS",
-            message: "✓ Đã xác minh DNS bảo vệ!\nĐã xác thực bởi ZevCheat iOS.",
+            message: "Đã xác minh DNS bảo vệ",
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -661,10 +686,8 @@ public final class MainViewController: UIViewController {
 
     @objc private func handleInjectOrUninjectTapped() {
         if isInjected {
-            // Chế độ UNINJECTOR: Xóa sạch toàn bộ file mod khi out game
             executeUninjector()
         } else {
-            // Chế độ INJECTOR: Nạp file vào game
             executeInjector()
         }
     }
@@ -672,7 +695,7 @@ public final class MainViewController: UIViewController {
     private func executeInjector() {
         let selectedCards = cardViews.filter { $0.isSelected }
         guard !selectedCards.isEmpty else {
-            let alert = UIAlertController(title: "Chưa chọn tính năng", message: "Vui lòng chọn ít nhất 1 chức năng để nạp vào game!", preferredStyle: .alert)
+            let alert = UIAlertController(title: "Chưa chọn tính năng", message: "Vui lòng chọn ít nhất 1 chức năng để nạp vào game.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             present(alert, animated: true)
             return
@@ -684,10 +707,10 @@ public final class MainViewController: UIViewController {
 
         let targetGame = selectedBundleId == "com.dts.freefireth" ? "Free Fire" : "Free Fire MAX"
         term.queueLogs([
-            "[*] Initializing ZevCheatiOS Tactical Injector v2.0...",
-            "[*] Authenticating license session key...",
-            "[+] Target Game: \(targetGame) (\(selectedBundleId))",
-            "[*] Querying iOS Sandbox Container Manager (libsystem_containermanager)..."
+            "[*] Bắt đầu khởi tạo ZevCheatiOS Tactical Injector...",
+            "[*] Đang xác thực phiên bản quyền...",
+            "[+] Game mục tiêu: \(targetGame) (\(selectedBundleId))",
+            "[*] Đang kết nối MobileContainerManager..."
         ])
 
         let group = DispatchGroup()
@@ -698,7 +721,7 @@ public final class MainViewController: UIViewController {
 
             group.enter()
             DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) {
-                term.queueLogs(["[*] Tải gói dữ liệu từ máy chủ: [\(name)]..."])
+                term.queueLogs(["[*] Đang tải dữ liệu: \(name)..."])
 
                 APIService.shared.downloadFile(slot: slotKey, key: self.key) { [weak self] success, err, data in
                     guard let self = self else { group.leave(); return }
@@ -707,17 +730,16 @@ public final class MainViewController: UIViewController {
                             if slotKey == "asset_indexer" {
                                 let paths = try FileReplacer.shared.injectAssetIndexer(data: d, bundleId: self.selectedBundleId)
                                 term.queueLogs([
-                                    "[+] Patching assetindexer...",
-                                    "[✓] Đã nạp thành công \(paths.count) vị trí asset bundle!"
+                                    "[+] Đang patch assetindexer...",
+                                    "[✓] Đã nạp thành công \(paths.count) vị trí asset bundle"
                                 ])
                             } else if slotKey == "cache_res" {
                                 let paths = try FileReplacer.shared.injectCacheRes(data: d, bundleId: self.selectedBundleId)
                                 term.queueLogs([
-                                    "[+] Patching cache_res...",
-                                    "[✓] Đã nạp thành công \(paths.count) vị trí cache resource!"
+                                    "[+] Đang patch cache_res...",
+                                    "[✓] Đã nạp thành công \(paths.count) vị trí cache resource"
                                 ])
                             } else {
-                                // Tự động phân tích vị trí file tối ưu
                                 let dest = try FileReplacer.shared.injectFile(
                                     data: d,
                                     bundleId: self.selectedBundleId,
@@ -725,7 +747,7 @@ public final class MainViewController: UIViewController {
                                     fileName: name,
                                     slotKey: slotKey
                                 )
-                                term.queueLogs(["[✓] Ghi đè an toàn (3105): \((dest as NSString).lastPathComponent)"])
+                                term.queueLogs(["[✓] Ghi đè an toàn: \((dest as NSString).lastPathComponent)"])
                             }
                         } catch {
                             term.queueLogs(["[!] Lỗi ghi file: \(error.localizedDescription)"])
@@ -742,12 +764,13 @@ public final class MainViewController: UIViewController {
             guard let self = self else { return }
             self.isInjected = true
             self.injectButton.setTitle(LanguageManager.shared.tr("uninject_button"), for: .normal)
+            self.injectButton.setImage(UIImage(systemName: "arrow.counterclockwise.circle.fill"), for: .normal)
 
             term.queueLogs([
-                "==================================================",
-                "[✓] HOÀN TẤT NẠP TẤT CẢ FILE THÀNH CÔNG 100%!",
-                "[*] Nút điều khiển đã chuyển sang UNINJECTOR (sẵn sàng gỡ khi out game).",
-                "[*] Đang chuẩn bị mở game..."
+                "--------------------------------------------------",
+                "[✓] Hoàn tất nạp tất cả file thành công.",
+                "[*] Nút điều khiển đã chuyển sang UNINJECTOR.",
+                "[*] Chuẩn bị khởi chạy game..."
             ])
             term.onFinished = { [weak self] in
                 guard let self = self else { return }
@@ -763,9 +786,9 @@ public final class MainViewController: UIViewController {
 
         let targetGame = selectedBundleId == "com.dts.freefireth" ? "Free Fire" : "Free Fire MAX"
         term.queueLogs([
-            "[*] Bắt đầu quy trình UNINJECTOR (Dọn dẹp sạch game)...",
+            "[*] Bắt đầu quy trình UNINJECTOR dọn dẹp game...",
             "[+] Mục tiêu: \(targetGame) (\(selectedBundleId))",
-            "[*] Đang kiểm tra sổ cái sao lưu Documents/Zev_Backups..."
+            "[*] Đang khôi phục các tệp gốc..."
         ])
 
         DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) { [weak self] in
@@ -775,11 +798,12 @@ public final class MainViewController: UIViewController {
                 DispatchQueue.main.async {
                     self.isInjected = false
                     self.injectButton.setTitle(LanguageManager.shared.tr("inject_button"), for: .normal)
+                    self.injectButton.setImage(UIImage(systemName: "syringe.fill"), for: .normal)
 
                     term.queueLogs([
-                        "[✓] Khôi phục toàn bộ file gốc từ bản sao lưu an toàn: THÀNH CÔNG!",
-                        "[✓] Đã dọn dẹp sạch \(count) tệp mod/patch trong Documents của game.",
-                        "[★] GAME ĐÃ TRỞ VỀ TRẠNG THÁI NGUYÊN BẢN 100% SẠCH AN TOÀN!"
+                        "[✓] Khôi phục toàn bộ file gốc từ bản sao lưu an toàn: Thành công",
+                        "[✓] Đã dọn dẹp sạch \(count) tệp mod trong Documents của game.",
+                        "[✓] Game đã trở về trạng thái nguyên bản sạch hoàn toàn."
                     ])
                 }
             } catch {
@@ -788,7 +812,7 @@ public final class MainViewController: UIViewController {
         }
     }
 
-    // MARK: - Community Links (Telegram & Zalo)
+    // MARK: - Community Links
     @objc private func handleOpenTelegram() {
         if let url = URL(string: "https://t.me/zevcheatn") {
             UIApplication.shared.open(url)
@@ -796,7 +820,6 @@ public final class MainViewController: UIViewController {
     }
 
     @objc private func handleOpenZalo() {
-        // Nút ấn 1 cái đến thẳng profile / chat Zalo 0365829172
         if let url = URL(string: "https://zalo.me/0365829172") {
             UIApplication.shared.open(url)
         }
@@ -806,26 +829,26 @@ public final class MainViewController: UIViewController {
         UIPasteboard.general.string = APIService.shared.deviceHWID
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
-        let alert = UIAlertController(title: "Đã Sao Chép", message: "Đã sao chép mã HWID vào bộ nhớ tạm:\n\(APIService.shared.deviceHWID)", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Đã Sao Chép", message: "Đã sao chép mã HWID vào bộ nhớ tạm", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
 
     @objc private func handleSelectLanguage() {
         let alert = UIAlertController(
-            title: "🌐 Chọn Ngôn Ngữ / Select Language",
-            message: "Hệ thống hỗ trợ 4 ngôn ngữ chuẩn:",
+            title: "Chọn Ngôn Ngữ / Select Language",
+            message: nil,
             preferredStyle: .actionSheet
         )
 
         for lang in AppLanguage.allCases {
             let isCurrent = lang == LanguageManager.shared.current
-            let title = "\(lang.displayName) \(isCurrent ? "✓" : "")"
+            let title = isCurrent ? "\(lang.displayName) ✓" : lang.displayName
             alert.addAction(UIAlertAction(title: title, style: .default) { _ in
                 LanguageManager.shared.current = lang
             })
         }
-        alert.addAction(UIAlertAction(title: "Đóng / Close", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Hủy / Cancel", style: .cancel))
 
         if let popover = alert.popoverPresentationController {
             popover.sourceView = langButton
@@ -838,7 +861,7 @@ public final class MainViewController: UIViewController {
         let ok = FileReplacer.shared.resetGuestAccount(bundleId: selectedBundleId)
         let alert = UIAlertController(
             title: ok ? "Thành công" : "Thông báo",
-            message: ok ? "Đã dọn dẹp sạch định danh tài khoản khách! Khi mở game sẽ tạo tài khoản Guest mới hoàn toàn." : "Không tìm thấy dữ liệu guest để xóa.",
+            message: ok ? "Đã dọn dẹp sạch định danh tài khoản khách." : "Không tìm thấy dữ liệu guest để xóa.",
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -863,14 +886,14 @@ public final class MainViewController: UIViewController {
         let diff = exp - Date().timeIntervalSince1970
         if diff <= 0 {
             countdownLabel.textColor = Theme.danger
-            countdownLabel.text = "⏳ HẠN DÙNG: ĐÃ HẾT HẠN"
+            countdownLabel.text = "HẠN DÙNG: ĐÃ HẾT HẠN"
         } else {
             let days = Int(diff) / 86400
             let hours = (Int(diff) % 86400) / 3600
             let minutes = (Int(diff) % 3600) / 60
             let seconds = Int(diff) % 60
             countdownLabel.textColor = Theme.success
-            countdownLabel.text = String(format: "⏳ HẠN DÙNG: %02dd %02dh %02dm %02ds", days, hours, minutes, seconds)
+            countdownLabel.text = String(format: "HẠN DÙNG: %02dd %02dh %02dm %02ds", days, hours, minutes, seconds)
         }
     }
 

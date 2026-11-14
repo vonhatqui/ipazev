@@ -9,19 +9,19 @@ public enum AppLanguage: String, CaseIterable {
 
     public var displayName: String {
         switch self {
-        case .vi: return "🇻🇳 Tiếng Việt"
-        case .en: return "🇺🇸 English"
-        case .sg: return "🇸🇬 Singapore (SG)"
-        case .id: return "🇮🇩 Bahasa Indonesia"
+        case .vi: return "Tiếng Việt"
+        case .en: return "English"
+        case .sg: return "Singapore"
+        case .id: return "Bahasa Indonesia"
         }
     }
 
     public var shortTitle: String {
         switch self {
-        case .vi: return "🌐 Tiếng Việt"
-        case .en: return "🌐 English"
-        case .sg: return "🌐 Singapore"
-        case .id: return "🌐 Indonesia"
+        case .vi: return "Tiếng Việt"
+        case .en: return "English"
+        case .sg: return "Singapore"
+        case .id: return "Indonesia"
         }
     }
 }
@@ -52,10 +52,10 @@ public final class LanguageManager {
             .id: "ZevCheatiOS"
         ],
         "app_subtitle": [
-            .vi: "TACTICAL CONTAINER INJECTOR · VIP",
-            .en: "TACTICAL CONTAINER INJECTOR · VIP",
-            .sg: "TACTICAL CONTAINER INJECTOR · VIP",
-            .id: "TACTICAL CONTAINER INJECTOR · VIP"
+            .vi: "TACTICAL CONTAINER INJECTOR",
+            .en: "TACTICAL CONTAINER INJECTOR",
+            .sg: "TACTICAL CONTAINER INJECTOR",
+            .id: "TACTICAL CONTAINER INJECTOR"
         ],
         "device_model": [
             .vi: "Model Thiết Bị",
@@ -88,10 +88,10 @@ public final class LanguageManager {
             .id: "Masukkan Kunci Lisensi"
         ],
         "key_placeholder": [
-            .vi: "Nhập mã key VIP của bạn...",
-            .en: "Enter your VIP key...",
-            .sg: "Enter your VIP key...",
-            .id: "Masukkan kunci VIP Anda..."
+            .vi: "Nhập mã key",
+            .en: "Enter license key",
+            .sg: "Enter license key",
+            .id: "Masukkan kunci lisensi"
         ],
         "paste": [
             .vi: "DÁN",
@@ -124,16 +124,16 @@ public final class LanguageManager {
             .id: "PENGATURAN"
         ],
         "inject_button": [
-            .vi: "💉 INJECTOR VÀO GAME",
-            .en: "💉 INJECT INTO GAME",
-            .sg: "💉 INJECT INTO GAME",
-            .id: "💉 INJECTOR KE GAME"
+            .vi: "INJECTOR",
+            .en: "INJECTOR",
+            .sg: "INJECTOR",
+            .id: "INJECTOR"
         ],
         "uninject_button": [
-            .vi: "🔄 UNINJECTOR (XÓA SẠCH MOD/FILE)",
-            .en: "🔄 UNINJECTOR (RESTORE CLEAN)",
-            .sg: "🔄 UNINJECTOR (RESTORE CLEAN)",
-            .id: "🔄 UNINJECTOR (HAPUS BERSIH MOD)"
+            .vi: "UNINJECTOR",
+            .en: "UNINJECTOR",
+            .sg: "UNINJECTOR",
+            .id: "UNINJECTOR"
         ],
         "dns_title": [
             .vi: "Cấu Hình DoH DNS Chặn Ban",
@@ -148,64 +148,64 @@ public final class LanguageManager {
             .id: "Rute DNS melalui server proteksi untuk memblokir telemetri, laporan kecurangan, dan pemindaian tanda tangan."
         ],
         "dns_status_verified": [
-            .vi: "✓ Đã Xác Minh DNS (Đã xác thực bởi ZevCheat iOS)",
-            .en: "✓ DNS Verified (Authenticated by ZevCheat iOS)",
-            .sg: "✓ DNS Verified (Authenticated by ZevCheat iOS)",
-            .id: "✓ DNS Terverifikasi (Diautentikasi oleh ZevCheat iOS)"
+            .vi: "Đã Xác Minh DNS",
+            .en: "DNS Verified",
+            .sg: "DNS Verified",
+            .id: "DNS Terverifikasi"
         ],
         "dns_status_unverified": [
-            .vi: "⚠️ Chưa Cài Đặt DNS Bảo Vệ (Bắt buộc)",
-            .en: "⚠️ DNS Protection Not Installed (Required)",
-            .sg: "⚠️ DNS Protection Not Installed (Required)",
-            .id: "⚠️ Proteksi DNS Belum Terpasang (Wajib)"
+            .vi: "Chưa Cài Đặt DNS",
+            .en: "DNS Not Installed",
+            .sg: "DNS Not Installed",
+            .id: "DNS Belum Terpasang"
         ],
         "dns_install_button": [
-            .vi: "📥 CÀI PROFILE DNS (.MOBILECONFIG)",
-            .en: "📥 INSTALL DNS PROFILE (.MOBILECONFIG)",
-            .sg: "📥 INSTALL DNS PROFILE (.MOBILECONFIG)",
-            .id: "📥 PASANG PROFIL DNS (.MOBILECONFIG)"
+            .vi: "CÀI PROFILE DNS",
+            .en: "INSTALL DNS PROFILE",
+            .sg: "INSTALL DNS PROFILE",
+            .id: "PASANG PROFIL DNS"
         ],
         "dns_check_button": [
-            .vi: "🔄 KIỂM TRA LẠI TRẠNG THÁI DNS",
-            .en: "🔄 RECHECK DNS STATUS",
-            .sg: "🔄 RECHECK DNS STATUS",
-            .id: "🔄 PERIKSA ULANG STATUS DNS"
+            .vi: "KIỂM TRA DNS",
+            .en: "CHECK DNS STATUS",
+            .sg: "CHECK DNS STATUS",
+            .id: "PERIKSA STATUS DNS"
         ],
         "community_title": [
-            .vi: "CỘNG ĐỒNG & HỖ TRỢ KỸ THUẬT",
-            .en: "COMMUNITY & TECHNICAL SUPPORT",
-            .sg: "COMMUNITY & TECHNICAL SUPPORT",
-            .id: "KOMUNITAS & DUKUNGAN TEKNIS"
+            .vi: "KÊNH HỖ TRỢ",
+            .en: "SUPPORT CHANNELS",
+            .sg: "SUPPORT CHANNELS",
+            .id: "SALURAN DUKUNGAN"
         ],
         "open_telegram": [
-            .vi: "💬 VÀO TELEGRAM CỘNG ĐỒNG (t.me/zevcheatn)",
-            .en: "💬 JOIN TELEGRAM COMMUNITY (t.me/zevcheatn)",
-            .sg: "💬 JOIN TELEGRAM COMMUNITY (t.me/zevcheatn)",
-            .id: "💬 GABUNG TELEGRAM (t.me/zevcheatn)"
+            .vi: "TELEGRAM CỘNG ĐỒNG",
+            .en: "TELEGRAM COMMUNITY",
+            .sg: "TELEGRAM COMMUNITY",
+            .id: "KOMUNITAS TELEGRAM"
         ],
         "open_zalo": [
-            .vi: "💬 CHAT ZALO HỖ TRỢ: 0365829172",
-            .en: "💬 CHAT ZALO SUPPORT: 0365829172",
-            .sg: "💬 CHAT ZALO SUPPORT: 0365829172",
-            .id: "💬 CHAT DUKUNGAN ZALO: 0365829172"
+            .vi: "ZALO HỖ TRỢ",
+            .en: "ZALO SUPPORT",
+            .sg: "ZALO SUPPORT",
+            .id: "DUKUNGAN ZALO"
         ],
         "reset_guest": [
-            .vi: "🗑️ XÓA DỮ LIỆU TÀI KHOẢN KHÁCH (RESET GUEST)",
-            .en: "🗑️ RESET GUEST ACCOUNT DATA",
-            .sg: "🗑️ RESET GUEST ACCOUNT DATA",
-            .id: "🗑️ HAPUS DATA AKUN GUEST"
+            .vi: "XÓA TÀI KHOẢN KHÁCH",
+            .en: "RESET GUEST ACCOUNT",
+            .sg: "RESET GUEST ACCOUNT",
+            .id: "HAPUS AKUN GUEST"
         ],
         "logout": [
-            .vi: "ĐĂNG XUẤT LICENSE",
-            .en: "LOGOUT LICENSE",
-            .sg: "LOGOUT LICENSE",
-            .id: "KELUAR LISENSI"
+            .vi: "ĐĂNG XUẤT",
+            .en: "LOGOUT",
+            .sg: "LOGOUT",
+            .id: "KELUAR"
         ],
         "device_info": [
-            .vi: "THÔNG TIN THIẾT BỊ & PHIÊN BẢN",
-            .en: "DEVICE & VERSION INFORMATION",
-            .sg: "DEVICE & VERSION INFORMATION",
-            .id: "INFORMASI PERANGKAT & VERSI"
+            .vi: "THÔNG TIN HỆ THỐNG",
+            .en: "SYSTEM INFORMATION",
+            .sg: "SYSTEM INFORMATION",
+            .id: "INFORMASI SISTEM"
         ]
     ]
 

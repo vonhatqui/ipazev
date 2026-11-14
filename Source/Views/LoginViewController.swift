@@ -1,6 +1,6 @@
 import UIKit
 
-/// Màn hình Đăng nhập & Xác thực License chuẩn ZevCheatiOS phong cách Aurora
+/// Màn hình Đăng nhập & Xác thực License chuẩn ZevCheatiOS phong cách Aurora (Code Icons thuần túy, không dùng Emoji)
 public final class LoginViewController: UIViewController, UITextFieldDelegate {
 
     private let backgroundView = ZevBackgroundView()
@@ -108,7 +108,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         subtitleLabel.textAlignment = .center
         contentView.addSubview(subtitleLabel)
 
-        // 6. Device Info Card (Chuẩn giao diện Aurora)
+        // 6. Device Info Card
         deviceCardView.translatesAutoresizingMaskIntoConstraints = false
         deviceCardView.backgroundColor = UIColor(red: 0.10, green: 0.08, blue: 0.17, alpha: 0.92)
         deviceCardView.layer.cornerRadius = 18
@@ -146,7 +146,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         osValueLabel.textAlignment = .right
         deviceCardView.addSubview(osValueLabel)
 
-        // Row 3: Được Hỗ Trợ -> Badge "Đã xác minh"
+        // Row 3: Được Hỗ Trợ -> Badge Code Icon "checkmark.shield.fill"
         supportTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         supportTitleLabel.font = .systemFont(ofSize: 14, weight: .regular)
         supportTitleLabel.textColor = UIColor(red: 0.62, green: 0.66, blue: 0.76, alpha: 1.0)
@@ -185,7 +185,6 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         keyFieldContainer.layer.borderColor = UIColor(white: 1.0, alpha: 0.12).cgColor
         contentView.addSubview(keyFieldContainer)
 
-        // Ô nhập key KHÔNG hiện sẵn key cũ (để trống sạch sẽ)
         keyTextField.translatesAutoresizingMaskIntoConstraints = false
         keyTextField.text = ""
         keyTextField.textColor = .white
@@ -202,7 +201,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         pasteKeyButton.addTarget(self, action: #selector(handlePasteKey), for: .touchUpInside)
         keyFieldContainer.addSubview(pasteKeyButton)
 
-        // 9. Status / Warning Label
+        // 9. Status / Warning Label (Không dùng Emoji)
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         statusLabel.font = .systemFont(ofSize: 13, weight: .semibold)
         statusLabel.textColor = UIColor(red: 0.97, green: 0.44, blue: 0.49, alpha: 1.0)
@@ -210,7 +209,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         statusLabel.text = ""
         contentView.addSubview(statusLabel)
 
-        // 10. Activate Button ("Kích Hoạt")
+        // 10. Activate Button
         activateButton.translatesAutoresizingMaskIntoConstraints = false
         activateButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
         activateButton.addTarget(self, action: #selector(handleActivate), for: .touchUpInside)
@@ -221,7 +220,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         activityIndicator.hidesWhenStopped = true
         activateButton.addSubview(activityIndicator)
 
-        // 11. Bottom Language Pill (Bấm để đổi 4 ngôn ngữ VN, EN, SG, ID)
+        // 11. Bottom Language Pill với Code Icon (SF Symbol: globe)
         langButton.translatesAutoresizingMaskIntoConstraints = false
         langButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
         langButton.setTitleColor(UIColor(red: 0.72, green: 0.76, blue: 0.86, alpha: 1.0), for: .normal)
@@ -229,18 +228,19 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         langButton.layer.cornerRadius = 18
         langButton.layer.borderWidth = 1.0
         langButton.layer.borderColor = UIColor(white: 1.0, alpha: 0.08).cgColor
+        langButton.setImage(UIImage(systemName: "globe"), for: .normal)
+        langButton.tintColor = Theme.accentLight
+        langButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -6, bottom: 0, right: 6)
         langButton.addTarget(self, action: #selector(handleSelectLanguage), for: .touchUpInside)
         contentView.addSubview(langButton)
 
         // Layout Constraints
         NSLayoutConstraint.activate([
-            // Logo
             logoImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 14),
             logoImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             logoImageView.widthAnchor.constraint(equalToConstant: 72),
             logoImageView.heightAnchor.constraint(equalToConstant: 72),
 
-            // Title & Subtitle
             titleLabel.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 10),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
@@ -249,12 +249,10 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
             subtitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             subtitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
-            // Device Info Card
             deviceCardView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 22),
             deviceCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             deviceCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
-            // Row 1
             modelTitleLabel.topAnchor.constraint(equalTo: deviceCardView.topAnchor, constant: 18),
             modelTitleLabel.leadingAnchor.constraint(equalTo: deviceCardView.leadingAnchor, constant: 18),
 
@@ -262,14 +260,12 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
             modelValueLabel.trailingAnchor.constraint(equalTo: deviceCardView.trailingAnchor, constant: -18),
             modelValueLabel.leadingAnchor.constraint(greaterThanOrEqualTo: modelTitleLabel.trailingAnchor, constant: 10),
 
-            // Row 2
             osTitleLabel.topAnchor.constraint(equalTo: modelTitleLabel.bottomAnchor, constant: 16),
             osTitleLabel.leadingAnchor.constraint(equalTo: deviceCardView.leadingAnchor, constant: 18),
 
             osValueLabel.centerYAnchor.constraint(equalTo: osTitleLabel.centerYAnchor),
             osValueLabel.trailingAnchor.constraint(equalTo: deviceCardView.trailingAnchor, constant: -18),
 
-            // Row 3
             supportTitleLabel.topAnchor.constraint(equalTo: osTitleLabel.bottomAnchor, constant: 18),
             supportTitleLabel.leadingAnchor.constraint(equalTo: deviceCardView.leadingAnchor, constant: 18),
             supportTitleLabel.bottomAnchor.constraint(equalTo: deviceCardView.bottomAnchor, constant: -18),
@@ -287,12 +283,10 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
             verifiedLabel.trailingAnchor.constraint(equalTo: verifiedBadge.trailingAnchor, constant: -10),
             verifiedLabel.centerYAnchor.constraint(equalTo: verifiedBadge.centerYAnchor),
 
-            // Section Label
             keySectionLabel.topAnchor.constraint(equalTo: deviceCardView.bottomAnchor, constant: 22),
             keySectionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
             keySectionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
 
-            // Input Box
             keyFieldContainer.topAnchor.constraint(equalTo: keySectionLabel.bottomAnchor, constant: 10),
             keyFieldContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             keyFieldContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
@@ -306,12 +300,10 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
             pasteKeyButton.centerYAnchor.constraint(equalTo: keyFieldContainer.centerYAnchor),
             pasteKeyButton.widthAnchor.constraint(equalToConstant: 44),
 
-            // Status Label (Warning)
             statusLabel.topAnchor.constraint(equalTo: keyFieldContainer.bottomAnchor, constant: 12),
             statusLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
             statusLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
 
-            // Activate Button
             activateButton.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 14),
             activateButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             activateButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
@@ -320,7 +312,6 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
             activityIndicator.centerYAnchor.constraint(equalTo: activateButton.centerYAnchor),
             activityIndicator.trailingAnchor.constraint(equalTo: activateButton.trailingAnchor, constant: -18),
 
-            // Language Pill
             langButton.topAnchor.constraint(equalTo: activateButton.bottomAnchor, constant: 22),
             langButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             langButton.widthAnchor.constraint(equalToConstant: 160),
@@ -330,7 +321,6 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
     }
 
     private func setupTitleText() {
-        // Tên chuẩn ZevCheatiOS với phối màu Aurora Neon
         let titleAttr = NSMutableAttributedString()
         let nameChars: [(String, UIColor)] = [
             ("Z", UIColor(red: 0.68, green: 0.38, blue: 0.96, alpha: 1.0)),
@@ -386,19 +376,19 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
 
     @objc private func handleSelectLanguage() {
         let alert = UIAlertController(
-            title: "🌐 Chọn Ngôn Ngữ / Select Language",
-            message: "Hệ thống hỗ trợ 4 ngôn ngữ chuẩn:",
+            title: "Chọn Ngôn Ngữ / Select Language",
+            message: nil,
             preferredStyle: .actionSheet
         )
 
         for lang in AppLanguage.allCases {
             let isCurrent = lang == LanguageManager.shared.current
-            let title = "\(lang.displayName) \(isCurrent ? "✓" : "")"
+            let title = isCurrent ? "\(lang.displayName) ✓" : lang.displayName
             alert.addAction(UIAlertAction(title: title, style: .default) { _ in
                 LanguageManager.shared.current = lang
             })
         }
-        alert.addAction(UIAlertAction(title: "Đóng / Close", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Hủy / Cancel", style: .cancel))
 
         if let popover = alert.popoverPresentationController {
             popover.sourceView = langButton
@@ -411,7 +401,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         APIService.shared.checkMaintenanceStatus { [weak self] isMaint, msg in
             if isMaint {
                 self?.statusLabel.textColor = Theme.warning
-                self?.statusLabel.text = "⚠️ \(msg ?? "Hệ thống đang bảo trì. Vui lòng quay lại sau.")"
+                self?.statusLabel.text = msg ?? "Hệ thống đang bảo trì. Vui lòng quay lại sau."
                 self?.activateButton.setEnabledStyle(false)
             }
         }
@@ -422,7 +412,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
         statusLabel.textColor = Theme.success
-        statusLabel.text = "✓ Đã sao chép mã HWID thiết bị vào bộ nhớ tạm!"
+        statusLabel.text = "Đã sao chép mã HWID vào bộ nhớ tạm"
     }
 
     @objc private func handlePasteKey() {
@@ -437,7 +427,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
     @objc private func handleActivate() {
         guard let key = keyTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty else {
             statusLabel.textColor = UIColor(red: 0.97, green: 0.44, blue: 0.49, alpha: 1.0)
-            statusLabel.text = "⚠️ \(LanguageManager.shared.tr("key_placeholder"))"
+            statusLabel.text = LanguageManager.shared.tr("key_placeholder")
             return
         }
 
@@ -445,7 +435,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         activateButton.setEnabledStyle(false)
         activityIndicator.startAnimating()
         statusLabel.textColor = Theme.textSub
-        statusLabel.text = "Đang kết nối máy chủ & kích hoạt giấy phép..."
+        statusLabel.text = "Đang kết nối máy chủ và xác thực..."
 
         APIService.shared.validateKey(key: key) { [weak self] success, err, licenseInfo in
             guard let self = self else { return }
@@ -456,7 +446,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.success)
                 self.statusLabel.textColor = Theme.success
-                self.statusLabel.text = "✓ Kích hoạt thành công! Đang vào ứng dụng..."
+                self.statusLabel.text = "Xác thực thành công. Đang vào ứng dụng..."
 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                     let mainVC = MainViewController(key: key, licenseInfo: info)
@@ -469,7 +459,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
                 generator.notificationOccurred(.error)
                 self.statusLabel.textColor = UIColor(red: 0.97, green: 0.44, blue: 0.49, alpha: 1.0)
                 let message = err ?? "Khóa không hợp lệ hoặc đã hết hạn."
-                self.statusLabel.text = "⚠️ \(message)"
+                self.statusLabel.text = message
             }
         }
     }
