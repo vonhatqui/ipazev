@@ -1,6 +1,6 @@
 import UIKit
 
-/// Card hiển thị chức năng phong cách Aurora với nút radio neon và hiệu ứng chọn phát sáng
+/// Card hiển thị chức năng phong cách Aurora với nút chọn ô vuông phát sáng (Square Checkbox)
 public final class FeatureCardView: UIView {
 
     public var onSelectionChanged: ((Bool) -> Void)?
@@ -18,8 +18,10 @@ public final class FeatureCardView: UIView {
     private let nameLabel = UILabel()
     private let tagLabel = UILabel()
     private let targetPathLabel = UILabel()
-    private let radio = UIView()
-    private let radioDot = UIView()
+
+    // Nút chọn ô vuông (Square Checkbox)
+    private let squareBox = UIView()
+    private let checkmarkIcon = UIImageView()
 
     public init(feature: [String: Any], selected: Bool = false) {
         self.featureData = feature
@@ -58,7 +60,6 @@ public final class FeatureCardView: UIView {
         badgeIcon.contentMode = .scaleAspectFit
         badgeIcon.tintColor = Theme.accentLight
 
-        // Load icon từ asset hoặc SF Symbol
         let iconName = featureData["icon"] as? String ?? "sparkles"
         if let customImg = UIImage(named: "\(iconName).png") {
             badgeIcon.image = customImg
@@ -74,7 +75,7 @@ public final class FeatureCardView: UIView {
         nameLabel.textColor = Theme.text
         addSubview(nameLabel)
 
-        // 3. Tag Label (v2.108.x · Compulsory · SAFE)
+        // 3. Tag Label
         tagLabel.translatesAutoresizingMaskIntoConstraints = false
         let ver = featureData["version"] as? String ?? "v1.0"
         let tag = featureData["tag"] as? String ?? "SAFE"
@@ -90,18 +91,20 @@ public final class FeatureCardView: UIView {
         targetPathLabel.textColor = Theme.textDim
         addSubview(targetPathLabel)
 
-        // 5. Radio Button Outer
-        radio.translatesAutoresizingMaskIntoConstraints = false
-        radio.layer.cornerRadius = 11
-        radio.layer.borderWidth = 1.8
-        radio.layer.borderColor = Theme.textDim.cgColor
-        addSubview(radio)
+        // 5. Square Checkbox (Nút ô vuông theo yêu cầu)
+        squareBox.translatesAutoresizingMaskIntoConstraints = false
+        squareBox.layer.cornerRadius = 7
+        squareBox.layer.cornerCurve = .continuous
+        squareBox.layer.borderWidth = 1.8
+        squareBox.layer.borderColor = Theme.textDim.cgColor
+        squareBox.clipsToBounds = true
+        addSubview(squareBox)
 
-        // Radio Dot Inner
-        radioDot.translatesAutoresizingMaskIntoConstraints = false
-        radioDot.layer.cornerRadius = 6
-        radioDot.backgroundColor = Theme.accentLight
-        radio.addSubview(radioDot)
+        checkmarkIcon.translatesAutoresizingMaskIntoConstraints = false
+        checkmarkIcon.image = UIImage(systemName: "checkmark")
+        checkmarkIcon.tintColor = .white
+        checkmarkIcon.contentMode = .scaleAspectFit
+        squareBox.addSubview(checkmarkIcon)
 
         NSLayoutConstraint.activate([
             badge.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
@@ -116,7 +119,7 @@ public final class FeatureCardView: UIView {
 
             nameLabel.leadingAnchor.constraint(equalTo: badge.trailingAnchor, constant: 12),
             nameLabel.topAnchor.constraint(equalTo: topAnchor, constant: 14),
-            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: radio.leadingAnchor, constant: -10),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: squareBox.leadingAnchor, constant: -10),
 
             tagLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             tagLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 3),
@@ -124,17 +127,17 @@ public final class FeatureCardView: UIView {
             targetPathLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             targetPathLabel.topAnchor.constraint(equalTo: tagLabel.bottomAnchor, constant: 3),
             targetPathLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -14),
-            targetPathLabel.trailingAnchor.constraint(lessThanOrEqualTo: radio.leadingAnchor, constant: -10),
+            targetPathLabel.trailingAnchor.constraint(lessThanOrEqualTo: squareBox.leadingAnchor, constant: -10),
 
-            radio.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            radio.centerYAnchor.constraint(equalTo: centerYAnchor),
-            radio.widthAnchor.constraint(equalToConstant: 22),
-            radio.heightAnchor.constraint(equalToConstant: 22),
+            squareBox.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            squareBox.centerYAnchor.constraint(equalTo: centerYAnchor),
+            squareBox.widthAnchor.constraint(equalToConstant: 24),
+            squareBox.heightAnchor.constraint(equalToConstant: 24),
 
-            radioDot.centerXAnchor.constraint(equalTo: radio.centerXAnchor),
-            radioDot.centerYAnchor.constraint(equalTo: radio.centerYAnchor),
-            radioDot.widthAnchor.constraint(equalToConstant: 12),
-            radioDot.heightAnchor.constraint(equalToConstant: 12)
+            checkmarkIcon.centerXAnchor.constraint(equalTo: squareBox.centerXAnchor),
+            checkmarkIcon.centerYAnchor.constraint(equalTo: squareBox.centerYAnchor),
+            checkmarkIcon.widthAnchor.constraint(equalToConstant: 14),
+            checkmarkIcon.heightAnchor.constraint(equalToConstant: 14)
         ])
     }
 
@@ -155,17 +158,19 @@ public final class FeatureCardView: UIView {
                 self.layer.shadowOpacity = 0.55
                 self.layer.shadowOffset = .zero
 
-                self.radio.layer.borderColor = Theme.accentLight.cgColor
-                self.radioDot.alpha = 1.0
-                self.radioDot.transform = .identity
+                self.squareBox.backgroundColor = Theme.accent
+                self.squareBox.layer.borderColor = Theme.accentLight.cgColor
+                self.checkmarkIcon.alpha = 1.0
+                self.checkmarkIcon.transform = .identity
             } else {
                 self.backgroundColor = Theme.card
                 self.layer.borderColor = Theme.cardStroke.cgColor
                 self.layer.shadowOpacity = 0.0
 
-                self.radio.layer.borderColor = Theme.textDim.cgColor
-                self.radioDot.alpha = 0.0
-                self.radioDot.transform = CGAffineTransform(scaleX: 0.2, y: 0.2)
+                self.squareBox.backgroundColor = UIColor(white: 1.0, alpha: 0.04)
+                self.squareBox.layer.borderColor = Theme.textDim.withAlphaComponent(0.6).cgColor
+                self.checkmarkIcon.alpha = 0.0
+                self.checkmarkIcon.transform = CGAffineTransform(scaleX: 0.3, y: 0.3)
             }
         }
 
@@ -176,4 +181,3 @@ public final class FeatureCardView: UIView {
         }
     }
 }
-

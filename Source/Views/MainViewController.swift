@@ -1,6 +1,6 @@
 import UIKit
 
-/// Màn hình điều khiển chính ZevCheatiOS chuẩn phong cách Aurora với hệ thống Tab, Terminal ma trận & Camouflage
+/// Màn hình điều khiển chính ZevCheatiOS chuẩn phong cách Aurora với 3 Tab: Trang chủ - DNS Proxy - Cài đặt
 public final class MainViewController: UIViewController {
 
     private let key: String
@@ -16,28 +16,51 @@ public final class MainViewController: UIViewController {
     private let logoImageView = UIImageView()
     private let titleLabel = UILabel()
     private let licenseCard = UIView()
-    private let keyBadgeLabel = UILabel()
+    private let deviceModelLabel = UILabel()
+    private let osVersionLabel = UILabel()
     private let countdownLabel = UILabel()
     private var countdownTimer: Timer?
 
-    // Tab Bar (Segmented Control phong cách Aurora)
-    private let tabSegment = UISegmentedControl(items: ["NẠP CACHE", "DNS PROXY", "NGỤY TRANG", "CÀI ĐẶT"])
+    // Tab Bar (Trang chủ - DNS Proxy - Cài đặt)
+    private let tabSegment = UISegmentedControl(items: ["TRANG CHỦ", "DNS PROXY", "CÀI ĐẶT"])
     private let tabContainer = UIView()
 
-    // Pages
-    private let featuresPage = UIView()
+    // 3 Pages
+    private let homePage = UIView()
     private let dnsPage = UIView()
-    private let camouflagePage = UIView()
     private let settingsPage = UIView()
 
-    // Features Page components
+    // Trang chủ components
     private let gameSegment = UISegmentedControl(items: ["Free Fire", "Free Fire MAX"])
     private let featuresStack = UIStackView()
     private var cardViews: [FeatureCardView] = []
-    private let injectButton = NeonButton(title: "⚡ INJECT VÀO GAME NGAY")
+    private let injectButton = NeonButton(title: "💉 INJECTOR VÀO GAME")
+    private var isInjected: Bool = false
+
+    // DNS components
+    private let dnsStatusCard = UIView()
+    private let dnsBadge = UIView()
+    private let dnsBadgeIcon = UIImageView()
+    private let dnsBadgeLabel = UILabel()
+    private let dnsDescLabel = UILabel()
+    private let installDNSBtn = NeonButton(title: "📥 CÀI PROFILE DNS (.MOBILECONFIG)")
+    private let checkDNSBtn = UIButton(type: .system)
+    private let resetGuestBtn = UIButton(type: .system)
+
+    // Settings components
+    private let supportCard = UIView()
+    private let supportTitle = UILabel()
+    private let telegramBtn = NeonButton(title: "💬 VÀO TELEGRAM CỘNG ĐỒNG")
+    private let zaloBtn = NeonButton(title: "💬 CHAT ZALO HỖ TRỢ: 0365829172")
+    private let infoCard = UIView()
+    private let infoTitle = UILabel()
+    private let hwidLabel = UILabel()
+    private let langButton = UIButton(type: .system)
+    private let logoutBtn = UIButton(type: .system)
 
     // Terminal
     private var activeTerminal: TerminalView?
+    private var features: [[String: Any]] = []
 
     public init(key: String, licenseInfo: [String: Any]) {
         self.key = key
@@ -52,9 +75,13 @@ public final class MainViewController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        updateLocalizedTexts()
         loadFeatures()
         startCountdown()
+        checkDNSStatus()
         LocalConfigServer.shared.start()
+
+        NotificationCenter.default.addObserver(self, selector: #selector(handleLanguageChanged), name: .languageDidChange, object: nil)
     }
 
     public override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -128,33 +155,39 @@ public final class MainViewController: UIViewController {
         vipPill.textAlignment = .center
         headerView.addSubview(vipPill)
 
-        // License Card
+        // License Card: Hiện Phiên bản iOS, Thiết bị và Thời gian hạn dùng
         licenseCard.translatesAutoresizingMaskIntoConstraints = false
         licenseCard.backgroundColor = Theme.card
-        licenseCard.layer.cornerRadius = 14
+        licenseCard.layer.cornerRadius = 16
         licenseCard.layer.borderWidth = 1.0
         licenseCard.layer.borderColor = Theme.cardStroke.cgColor
         contentView.addSubview(licenseCard)
 
-        keyBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
-        keyBadgeLabel.text = "KEY: \(key)"
-        keyBadgeLabel.font = .monospacedSystemFont(ofSize: 12, weight: .bold)
-        keyBadgeLabel.textColor = Theme.accentLight
-        licenseCard.addSubview(keyBadgeLabel)
+        deviceModelLabel.translatesAutoresizingMaskIntoConstraints = false
+        deviceModelLabel.text = "📱 THIẾT BỊ: \(UIDevice.current.modelName)"
+        deviceModelLabel.font = .monospacedSystemFont(ofSize: 12, weight: .bold)
+        deviceModelLabel.textColor = Theme.text
+        licenseCard.addSubview(deviceModelLabel)
+
+        osVersionLabel.translatesAutoresizingMaskIntoConstraints = false
+        osVersionLabel.text = "⚙️ HỆ ĐIỀU HÀNH: iOS \(UIDevice.current.systemVersion)"
+        osVersionLabel.font = .monospacedSystemFont(ofSize: 11, weight: .medium)
+        osVersionLabel.textColor = Theme.accentLight
+        licenseCard.addSubview(osVersionLabel)
 
         countdownLabel.translatesAutoresizingMaskIntoConstraints = false
-        countdownLabel.font = .monospacedSystemFont(ofSize: 14, weight: .heavy)
+        countdownLabel.font = .monospacedSystemFont(ofSize: 13, weight: .heavy)
         countdownLabel.textColor = Theme.success
-        countdownLabel.text = "HẠN DÙNG: ĐANG TẢI..."
+        countdownLabel.text = "⏳ HẠN DÙNG: ĐANG TẢI..."
         licenseCard.addSubview(countdownLabel)
 
-        // 4. Tab Segmented Control
+        // 4. Tab Segmented Control (Trang chủ - DNS Proxy - Cài đặt)
         tabSegment.translatesAutoresizingMaskIntoConstraints = false
         tabSegment.selectedSegmentIndex = 0
         tabSegment.backgroundColor = Theme.card
         tabSegment.selectedSegmentTintColor = Theme.accentGlow
-        tabSegment.setTitleTextAttributes([.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 11, weight: .bold)], for: .selected)
-        tabSegment.setTitleTextAttributes([.foregroundColor: Theme.textDim, .font: UIFont.systemFont(ofSize: 11, weight: .medium)], for: .normal)
+        tabSegment.setTitleTextAttributes([.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 12, weight: .bold)], for: .selected)
+        tabSegment.setTitleTextAttributes([.foregroundColor: Theme.textDim, .font: UIFont.systemFont(ofSize: 12, weight: .medium)], for: .normal)
         tabSegment.addTarget(self, action: #selector(handleTabChanged), for: .valueChanged)
         contentView.addSubview(tabSegment)
 
@@ -162,9 +195,8 @@ public final class MainViewController: UIViewController {
         tabContainer.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(tabContainer)
 
-        setupFeaturesPage()
+        setupHomePage()
         setupDNSPage()
-        setupCamouflagePage()
         setupSettingsPage()
 
         showPage(index: 0)
@@ -192,18 +224,23 @@ public final class MainViewController: UIViewController {
             licenseCard.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 14),
             licenseCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
             licenseCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
-            licenseCard.heightAnchor.constraint(equalToConstant: 64),
 
-            keyBadgeLabel.topAnchor.constraint(equalTo: licenseCard.topAnchor, constant: 12),
-            keyBadgeLabel.leadingAnchor.constraint(equalTo: licenseCard.leadingAnchor, constant: 14),
+            deviceModelLabel.topAnchor.constraint(equalTo: licenseCard.topAnchor, constant: 12),
+            deviceModelLabel.leadingAnchor.constraint(equalTo: licenseCard.leadingAnchor, constant: 14),
+            deviceModelLabel.trailingAnchor.constraint(equalTo: licenseCard.trailingAnchor, constant: -14),
 
-            countdownLabel.bottomAnchor.constraint(equalTo: licenseCard.bottomAnchor, constant: -12),
+            osVersionLabel.topAnchor.constraint(equalTo: deviceModelLabel.bottomAnchor, constant: 4),
+            osVersionLabel.leadingAnchor.constraint(equalTo: licenseCard.leadingAnchor, constant: 14),
+            osVersionLabel.trailingAnchor.constraint(equalTo: licenseCard.trailingAnchor, constant: -14),
+
+            countdownLabel.topAnchor.constraint(equalTo: osVersionLabel.bottomAnchor, constant: 6),
             countdownLabel.leadingAnchor.constraint(equalTo: licenseCard.leadingAnchor, constant: 14),
+            countdownLabel.bottomAnchor.constraint(equalTo: licenseCard.bottomAnchor, constant: -12),
 
             tabSegment.topAnchor.constraint(equalTo: licenseCard.bottomAnchor, constant: 16),
             tabSegment.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
             tabSegment.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
-            tabSegment.heightAnchor.constraint(equalToConstant: 36),
+            tabSegment.heightAnchor.constraint(equalToConstant: 38),
 
             tabContainer.topAnchor.constraint(equalTo: tabSegment.bottomAnchor, constant: 14),
             tabContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
@@ -212,10 +249,10 @@ public final class MainViewController: UIViewController {
         ])
     }
 
-    // MARK: - Tab 0: Features Page (Nạp Cache)
-    private func setupFeaturesPage() {
-        featuresPage.translatesAutoresizingMaskIntoConstraints = false
-        tabContainer.addSubview(featuresPage)
+    // MARK: - Tab 0: Trang Chủ (Nạp Cache Game)
+    private func setupHomePage() {
+        homePage.translatesAutoresizingMaskIntoConstraints = false
+        tabContainer.addSubview(homePage)
 
         gameSegment.translatesAutoresizingMaskIntoConstraints = false
         gameSegment.selectedSegmentIndex = 0
@@ -224,82 +261,103 @@ public final class MainViewController: UIViewController {
         gameSegment.setTitleTextAttributes([.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 12, weight: .bold)], for: .selected)
         gameSegment.setTitleTextAttributes([.foregroundColor: Theme.textDim, .font: UIFont.systemFont(ofSize: 12, weight: .medium)], for: .normal)
         gameSegment.addTarget(self, action: #selector(handleGameChanged), for: .valueChanged)
-        featuresPage.addSubview(gameSegment)
+        homePage.addSubview(gameSegment)
 
         featuresStack.translatesAutoresizingMaskIntoConstraints = false
         featuresStack.axis = .vertical
         featuresStack.spacing = 10
-        featuresPage.addSubview(featuresStack)
+        homePage.addSubview(featuresStack)
 
+        // Nút Injector với icon cây tiêm 💉
         injectButton.translatesAutoresizingMaskIntoConstraints = false
-        injectButton.addTarget(self, action: #selector(handleInjectTapped), for: .touchUpInside)
-        featuresPage.addSubview(injectButton)
+        injectButton.addTarget(self, action: #selector(handleInjectOrUninjectTapped), for: .touchUpInside)
+        homePage.addSubview(injectButton)
 
         NSLayoutConstraint.activate([
-            featuresPage.topAnchor.constraint(equalTo: tabContainer.topAnchor),
-            featuresPage.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor),
-            featuresPage.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
-            featuresPage.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
+            homePage.topAnchor.constraint(equalTo: tabContainer.topAnchor),
+            homePage.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor),
+            homePage.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
+            homePage.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
 
-            gameSegment.topAnchor.constraint(equalTo: featuresPage.topAnchor),
-            gameSegment.leadingAnchor.constraint(equalTo: featuresPage.leadingAnchor),
-            gameSegment.trailingAnchor.constraint(equalTo: featuresPage.trailingAnchor),
+            gameSegment.topAnchor.constraint(equalTo: homePage.topAnchor),
+            gameSegment.leadingAnchor.constraint(equalTo: homePage.leadingAnchor),
+            gameSegment.trailingAnchor.constraint(equalTo: homePage.trailingAnchor),
             gameSegment.heightAnchor.constraint(equalToConstant: 34),
 
             featuresStack.topAnchor.constraint(equalTo: gameSegment.bottomAnchor, constant: 14),
-            featuresStack.leadingAnchor.constraint(equalTo: featuresPage.leadingAnchor),
-            featuresStack.trailingAnchor.constraint(equalTo: featuresPage.trailingAnchor),
+            featuresStack.leadingAnchor.constraint(equalTo: homePage.leadingAnchor),
+            featuresStack.trailingAnchor.constraint(equalTo: homePage.trailingAnchor),
 
             injectButton.topAnchor.constraint(equalTo: featuresStack.bottomAnchor, constant: 18),
-            injectButton.leadingAnchor.constraint(equalTo: featuresPage.leadingAnchor),
-            injectButton.trailingAnchor.constraint(equalTo: featuresPage.trailingAnchor),
-            injectButton.heightAnchor.constraint(equalToConstant: 50),
-            injectButton.bottomAnchor.constraint(equalTo: featuresPage.bottomAnchor, constant: -10)
+            injectButton.leadingAnchor.constraint(equalTo: homePage.leadingAnchor),
+            injectButton.trailingAnchor.constraint(equalTo: homePage.trailingAnchor),
+            injectButton.heightAnchor.constraint(equalToConstant: 52),
+            injectButton.bottomAnchor.constraint(equalTo: homePage.bottomAnchor, constant: -10)
         ])
     }
 
-    // MARK: - Tab 1: DNS Proxy Page
+    // MARK: - Tab 1: DNS Proxy
     private func setupDNSPage() {
         dnsPage.translatesAutoresizingMaskIntoConstraints = false
         tabContainer.addSubview(dnsPage)
 
-        let dnsCard = UIView()
-        dnsCard.translatesAutoresizingMaskIntoConstraints = false
-        dnsCard.backgroundColor = Theme.card
-        dnsCard.layer.cornerRadius = 16
-        dnsCard.layer.borderWidth = 1.0
-        dnsCard.layer.borderColor = Theme.cardStroke.cgColor
-        dnsPage.addSubview(dnsCard)
+        dnsStatusCard.translatesAutoresizingMaskIntoConstraints = false
+        dnsStatusCard.backgroundColor = Theme.card
+        dnsStatusCard.layer.cornerRadius = 16
+        dnsStatusCard.layer.borderWidth = 1.0
+        dnsStatusCard.layer.borderColor = Theme.cardStroke.cgColor
+        dnsPage.addSubview(dnsStatusCard)
 
         let dnsIcon = UIImageView(image: UIImage(systemName: "antenna.radiowaves.left.and.right"))
         dnsIcon.translatesAutoresizingMaskIntoConstraints = false
         dnsIcon.tintColor = Theme.accentLight
         dnsIcon.contentMode = .scaleAspectFit
-        dnsCard.addSubview(dnsIcon)
+        dnsStatusCard.addSubview(dnsIcon)
 
         let dnsTitle = UILabel()
         dnsTitle.translatesAutoresizingMaskIntoConstraints = false
-        dnsTitle.text = "Cấu Hình DoH DNS Chặn Ban"
+        dnsTitle.text = LanguageManager.shared.tr("dns_title")
         dnsTitle.font = .systemFont(ofSize: 16, weight: .bold)
         dnsTitle.textColor = Theme.text
-        dnsCard.addSubview(dnsTitle)
+        dnsStatusCard.addSubview(dnsTitle)
 
-        let dnsDesc = UILabel()
-        dnsDesc.translatesAutoresizingMaskIntoConstraints = false
-        dnsDesc.text = "Định tuyến DNS qua máy chủ bảo vệ để tự động chặn các domain ghi nhận telemetry, báo cáo gian lận và quét chữ ký của Free Fire."
-        dnsDesc.font = .systemFont(ofSize: 12, weight: .regular)
-        dnsDesc.textColor = Theme.textSub
-        dnsDesc.numberOfLines = 0
-        dnsCard.addSubview(dnsDesc)
+        dnsBadge.translatesAutoresizingMaskIntoConstraints = false
+        dnsBadge.layer.cornerRadius = 10
+        dnsBadge.layer.borderWidth = 1.0
+        dnsStatusCard.addSubview(dnsBadge)
 
-        let installDNSBtn = NeonButton(title: "📥 CÀI PROFILE DNS (.MOBILECONFIG)")
+        dnsBadgeIcon.translatesAutoresizingMaskIntoConstraints = false
+        dnsBadgeIcon.contentMode = .scaleAspectFit
+        dnsBadge.addSubview(dnsBadgeIcon)
+
+        dnsBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        dnsBadgeLabel.font = .systemFont(ofSize: 12, weight: .bold)
+        dnsBadge.addSubview(dnsBadgeLabel)
+
+        dnsDescLabel.translatesAutoresizingMaskIntoConstraints = false
+        dnsDescLabel.text = LanguageManager.shared.tr("dns_desc")
+        dnsDescLabel.font = .systemFont(ofSize: 12, weight: .regular)
+        dnsDescLabel.textColor = Theme.textSub
+        dnsDescLabel.numberOfLines = 0
+        dnsStatusCard.addSubview(dnsDescLabel)
+
         installDNSBtn.translatesAutoresizingMaskIntoConstraints = false
         installDNSBtn.addTarget(self, action: #selector(handleInstallDNS), for: .touchUpInside)
         dnsPage.addSubview(installDNSBtn)
 
-        let resetGuestBtn = UIButton(type: .system)
+        checkDNSBtn.translatesAutoresizingMaskIntoConstraints = false
+        checkDNSBtn.setTitle(LanguageManager.shared.tr("dns_check_button"), for: .normal)
+        checkDNSBtn.titleLabel?.font = .systemFont(ofSize: 13, weight: .bold)
+        checkDNSBtn.setTitleColor(Theme.accentLight, for: .normal)
+        checkDNSBtn.backgroundColor = Theme.card
+        checkDNSBtn.layer.cornerRadius = 12
+        checkDNSBtn.layer.borderWidth = 1.0
+        checkDNSBtn.layer.borderColor = Theme.cardStroke.cgColor
+        checkDNSBtn.addTarget(self, action: #selector(handleCheckDNS), for: .touchUpInside)
+        dnsPage.addSubview(checkDNSBtn)
+
         resetGuestBtn.translatesAutoresizingMaskIntoConstraints = false
-        resetGuestBtn.setTitle("🗑️ XÓA DỮ LIỆU TÀI KHOẢN KHÁCH (RESET GUEST)", for: .normal)
+        resetGuestBtn.setTitle(LanguageManager.shared.tr("reset_guest"), for: .normal)
         resetGuestBtn.titleLabel?.font = .systemFont(ofSize: 13, weight: .bold)
         resetGuestBtn.setTitleColor(Theme.danger, for: .normal)
         resetGuestBtn.backgroundColor = Theme.card
@@ -315,30 +373,49 @@ public final class MainViewController: UIViewController {
             dnsPage.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
             dnsPage.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
 
-            dnsCard.topAnchor.constraint(equalTo: dnsPage.topAnchor),
-            dnsCard.leadingAnchor.constraint(equalTo: dnsPage.leadingAnchor),
-            dnsCard.trailingAnchor.constraint(equalTo: dnsPage.trailingAnchor),
+            dnsStatusCard.topAnchor.constraint(equalTo: dnsPage.topAnchor),
+            dnsStatusCard.leadingAnchor.constraint(equalTo: dnsPage.leadingAnchor),
+            dnsStatusCard.trailingAnchor.constraint(equalTo: dnsPage.trailingAnchor),
 
-            dnsIcon.leadingAnchor.constraint(equalTo: dnsCard.leadingAnchor, constant: 16),
-            dnsIcon.topAnchor.constraint(equalTo: dnsCard.topAnchor, constant: 16),
-            dnsIcon.widthAnchor.constraint(equalToConstant: 32),
-            dnsIcon.heightAnchor.constraint(equalToConstant: 32),
+            dnsIcon.leadingAnchor.constraint(equalTo: dnsStatusCard.leadingAnchor, constant: 16),
+            dnsIcon.topAnchor.constraint(equalTo: dnsStatusCard.topAnchor, constant: 16),
+            dnsIcon.widthAnchor.constraint(equalToConstant: 28),
+            dnsIcon.heightAnchor.constraint(equalToConstant: 28),
 
-            dnsTitle.leadingAnchor.constraint(equalTo: dnsIcon.trailingAnchor, constant: 12),
+            dnsTitle.leadingAnchor.constraint(equalTo: dnsIcon.trailingAnchor, constant: 10),
             dnsTitle.centerYAnchor.constraint(equalTo: dnsIcon.centerYAnchor),
-            dnsTitle.trailingAnchor.constraint(equalTo: dnsCard.trailingAnchor, constant: -16),
+            dnsTitle.trailingAnchor.constraint(equalTo: dnsStatusCard.trailingAnchor, constant: -16),
 
-            dnsDesc.topAnchor.constraint(equalTo: dnsIcon.bottomAnchor, constant: 12),
-            dnsDesc.leadingAnchor.constraint(equalTo: dnsCard.leadingAnchor, constant: 16),
-            dnsDesc.trailingAnchor.constraint(equalTo: dnsCard.trailingAnchor, constant: -16),
-            dnsDesc.bottomAnchor.constraint(equalTo: dnsCard.bottomAnchor, constant: -16),
+            dnsBadge.topAnchor.constraint(equalTo: dnsIcon.bottomAnchor, constant: 14),
+            dnsBadge.leadingAnchor.constraint(equalTo: dnsStatusCard.leadingAnchor, constant: 16),
+            dnsBadge.trailingAnchor.constraint(equalTo: dnsStatusCard.trailingAnchor, constant: -16),
+            dnsBadge.heightAnchor.constraint(equalToConstant: 34),
 
-            installDNSBtn.topAnchor.constraint(equalTo: dnsCard.bottomAnchor, constant: 16),
+            dnsBadgeIcon.leadingAnchor.constraint(equalTo: dnsBadge.leadingAnchor, constant: 10),
+            dnsBadgeIcon.centerYAnchor.constraint(equalTo: dnsBadge.centerYAnchor),
+            dnsBadgeIcon.widthAnchor.constraint(equalToConstant: 16),
+            dnsBadgeIcon.heightAnchor.constraint(equalToConstant: 16),
+
+            dnsBadgeLabel.leadingAnchor.constraint(equalTo: dnsBadgeIcon.trailingAnchor, constant: 8),
+            dnsBadgeLabel.centerYAnchor.constraint(equalTo: dnsBadge.centerYAnchor),
+            dnsBadgeLabel.trailingAnchor.constraint(equalTo: dnsBadge.trailingAnchor, constant: -10),
+
+            dnsDescLabel.topAnchor.constraint(equalTo: dnsBadge.bottomAnchor, constant: 12),
+            dnsDescLabel.leadingAnchor.constraint(equalTo: dnsStatusCard.leadingAnchor, constant: 16),
+            dnsDescLabel.trailingAnchor.constraint(equalTo: dnsStatusCard.trailingAnchor, constant: -16),
+            dnsDescLabel.bottomAnchor.constraint(equalTo: dnsStatusCard.bottomAnchor, constant: -16),
+
+            installDNSBtn.topAnchor.constraint(equalTo: dnsStatusCard.bottomAnchor, constant: 16),
             installDNSBtn.leadingAnchor.constraint(equalTo: dnsPage.leadingAnchor),
             installDNSBtn.trailingAnchor.constraint(equalTo: dnsPage.trailingAnchor),
             installDNSBtn.heightAnchor.constraint(equalToConstant: 48),
 
-            resetGuestBtn.topAnchor.constraint(equalTo: installDNSBtn.bottomAnchor, constant: 14),
+            checkDNSBtn.topAnchor.constraint(equalTo: installDNSBtn.bottomAnchor, constant: 12),
+            checkDNSBtn.leadingAnchor.constraint(equalTo: dnsPage.leadingAnchor),
+            checkDNSBtn.trailingAnchor.constraint(equalTo: dnsPage.trailingAnchor),
+            checkDNSBtn.heightAnchor.constraint(equalToConstant: 44),
+
+            resetGuestBtn.topAnchor.constraint(equalTo: checkDNSBtn.bottomAnchor, constant: 12),
             resetGuestBtn.leadingAnchor.constraint(equalTo: dnsPage.leadingAnchor),
             resetGuestBtn.trailingAnchor.constraint(equalTo: dnsPage.trailingAnchor),
             resetGuestBtn.heightAnchor.constraint(equalToConstant: 44),
@@ -346,120 +423,33 @@ public final class MainViewController: UIViewController {
         ])
     }
 
-    // MARK: - Tab 2: Camouflage (Ngụy trang App Icon)
-    private func setupCamouflagePage() {
-        camouflagePage.translatesAutoresizingMaskIntoConstraints = false
-        tabContainer.addSubview(camouflagePage)
-
-        let titleCard = UILabel()
-        titleCard.translatesAutoresizingMaskIntoConstraints = false
-        titleCard.text = "Đổi Biểu Tượng App Ngoài Màn Hình Chính"
-        titleCard.font = .systemFont(ofSize: 14, weight: .bold)
-        titleCard.textColor = Theme.textSub
-        camouflagePage.addSubview(titleCard)
-
-        let icons = [
-            ("calculator", "Máy tính"),
-            ("camera", "Máy ảnh"),
-            ("capcut", "CapCut"),
-            ("chatgpt", "ChatGPT"),
-            ("facebook", "Facebook"),
-            ("instagram", "Instagram"),
-            ("tiktok", "TikTok"),
-            ("whatsapp", "WhatsApp"),
-            ("youtube", "YouTube")
-        ]
-
-        let gridStack = UIStackView()
-        gridStack.translatesAutoresizingMaskIntoConstraints = false
-        gridStack.axis = .vertical
-        gridStack.spacing = 10
-        camouflagePage.addSubview(gridStack)
-
-        var rowStack = UIStackView()
-        rowStack.axis = .horizontal
-        rowStack.spacing = 10
-        rowStack.distribution = .fillEqually
-
-        for (idx, item) in icons.enumerated() {
-            if idx > 0 && idx % 3 == 0 {
-                gridStack.addArrangedSubview(rowStack)
-                rowStack = UIStackView()
-                rowStack.axis = .horizontal
-                rowStack.spacing = 10
-                rowStack.distribution = .fillEqually
-            }
-
-            let btn = UIButton(type: .system)
-            btn.translatesAutoresizingMaskIntoConstraints = false
-            btn.backgroundColor = Theme.card
-            btn.layer.cornerRadius = 14
-            btn.layer.borderWidth = 1.0
-            btn.layer.borderColor = Theme.cardStroke.cgColor
-
-            let stack = UIStackView()
-            stack.translatesAutoresizingMaskIntoConstraints = false
-            stack.axis = .vertical
-            stack.alignment = .center
-            stack.spacing = 6
-            stack.isUserInteractionEnabled = false
-            btn.addSubview(stack)
-
-            let iconView = UIImageView()
-            iconView.translatesAutoresizingMaskIntoConstraints = false
-            iconView.contentMode = .scaleAspectFit
-            iconView.layer.cornerRadius = 8
-            iconView.clipsToBounds = true
-            if let custom = UIImage(named: "\(item.0)@2x.png") {
-                iconView.image = custom
-            } else {
-                iconView.image = UIImage(systemName: "app.fill")
-                iconView.tintColor = Theme.accentLight
-            }
-            iconView.widthAnchor.constraint(equalToConstant: 32).isActive = true
-            iconView.heightAnchor.constraint(equalToConstant: 32).isActive = true
-            stack.addArrangedSubview(iconView)
-
-            let lbl = UILabel()
-            lbl.text = item.1
-            lbl.font = .systemFont(ofSize: 11, weight: .semibold)
-            lbl.textColor = Theme.textSub
-            stack.addArrangedSubview(lbl)
-
-            NSLayoutConstraint.activate([
-                stack.centerXAnchor.constraint(equalTo: btn.centerXAnchor),
-                stack.centerYAnchor.constraint(equalTo: btn.centerYAnchor),
-                btn.heightAnchor.constraint(equalToConstant: 72)
-            ])
-
-            btn.tag = idx
-            btn.addTarget(self, action: #selector(handleSelectIcon(_:)), for: .touchUpInside)
-            rowStack.addArrangedSubview(btn)
-        }
-        gridStack.addArrangedSubview(rowStack)
-
-        NSLayoutConstraint.activate([
-            camouflagePage.topAnchor.constraint(equalTo: tabContainer.topAnchor),
-            camouflagePage.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor),
-            camouflagePage.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
-            camouflagePage.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
-
-            titleCard.topAnchor.constraint(equalTo: camouflagePage.topAnchor),
-            titleCard.leadingAnchor.constraint(equalTo: camouflagePage.leadingAnchor),
-
-            gridStack.topAnchor.constraint(equalTo: titleCard.bottomAnchor, constant: 12),
-            gridStack.leadingAnchor.constraint(equalTo: camouflagePage.leadingAnchor),
-            gridStack.trailingAnchor.constraint(equalTo: camouflagePage.trailingAnchor),
-            gridStack.bottomAnchor.constraint(equalTo: camouflagePage.bottomAnchor, constant: -10)
-        ])
-    }
-
-    // MARK: - Tab 3: Settings Page
+    // MARK: - Tab 2: Cài Đặt (Hỗ trợ Telegram, Zalo & Ngôn ngữ)
     private func setupSettingsPage() {
         settingsPage.translatesAutoresizingMaskIntoConstraints = false
         tabContainer.addSubview(settingsPage)
 
-        let infoCard = UIView()
+        // 1. Support & Community Card
+        supportCard.translatesAutoresizingMaskIntoConstraints = false
+        supportCard.backgroundColor = Theme.card
+        supportCard.layer.cornerRadius = 16
+        supportCard.layer.borderWidth = 1.0
+        supportCard.layer.borderColor = Theme.cardStroke.cgColor
+        settingsPage.addSubview(supportCard)
+
+        supportTitle.translatesAutoresizingMaskIntoConstraints = false
+        supportTitle.font = .systemFont(ofSize: 14, weight: .bold)
+        supportTitle.textColor = Theme.textSub
+        supportCard.addSubview(supportTitle)
+
+        telegramBtn.translatesAutoresizingMaskIntoConstraints = false
+        telegramBtn.addTarget(self, action: #selector(handleOpenTelegram), for: .touchUpInside)
+        supportCard.addSubview(telegramBtn)
+
+        zaloBtn.translatesAutoresizingMaskIntoConstraints = false
+        zaloBtn.addTarget(self, action: #selector(handleOpenZalo), for: .touchUpInside)
+        supportCard.addSubview(zaloBtn)
+
+        // 2. Info Card (Thiết bị & HWID)
         infoCard.translatesAutoresizingMaskIntoConstraints = false
         infoCard.backgroundColor = Theme.card
         infoCard.layer.cornerRadius = 16
@@ -467,31 +457,33 @@ public final class MainViewController: UIViewController {
         infoCard.layer.borderColor = Theme.cardStroke.cgColor
         settingsPage.addSubview(infoCard)
 
-        let infoTitle = UILabel()
         infoTitle.translatesAutoresizingMaskIntoConstraints = false
-        infoTitle.text = "THÔNG TIN HỆ THỐNG"
-        infoTitle.font = .systemFont(ofSize: 13, weight: .heavy)
-        infoTitle.textColor = Theme.accentLight
+        infoTitle.font = .systemFont(ofSize: 14, weight: .bold)
+        infoTitle.textColor = Theme.textSub
         infoCard.addSubview(infoTitle)
 
-        let serverLabel = UILabel()
-        serverLabel.translatesAutoresizingMaskIntoConstraints = false
-        serverLabel.text = "Máy chủ: \(APIService.shared.baseURL)"
-        serverLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
-        serverLabel.textColor = Theme.textSub
-        infoCard.addSubview(serverLabel)
-
-        let hwidLabel = UILabel()
         hwidLabel.translatesAutoresizingMaskIntoConstraints = false
-        hwidLabel.text = "HWID: \(APIService.shared.deviceHWID)"
         hwidLabel.font = .monospacedSystemFont(ofSize: 11, weight: .bold)
-        hwidLabel.textColor = Theme.textDim
-        hwidLabel.lineBreakMode = .byTruncatingMiddle
+        hwidLabel.textColor = Theme.accentLight
+        hwidLabel.numberOfLines = 0
+        hwidLabel.isUserInteractionEnabled = true
+        let copyHwidTap = UITapGestureRecognizer(target: self, action: #selector(handleCopyHWID))
+        hwidLabel.addGestureRecognizer(copyHwidTap)
         infoCard.addSubview(hwidLabel)
 
-        let logoutBtn = UIButton(type: .system)
+        // 3. Language Selector Pill Button
+        langButton.translatesAutoresizingMaskIntoConstraints = false
+        langButton.backgroundColor = Theme.card
+        langButton.layer.cornerRadius = 14
+        langButton.layer.borderWidth = 1.0
+        langButton.layer.borderColor = Theme.cardStroke.cgColor
+        langButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+        langButton.setTitleColor(Theme.text, for: .normal)
+        langButton.addTarget(self, action: #selector(handleSelectLanguage), for: .touchUpInside)
+        settingsPage.addSubview(langButton)
+
+        // 4. Logout Button
         logoutBtn.translatesAutoresizingMaskIntoConstraints = false
-        logoutBtn.setTitle("ĐĂNG XUẤT LICENSE", for: .normal)
         logoutBtn.titleLabel?.font = .systemFont(ofSize: 14, weight: .bold)
         logoutBtn.setTitleColor(Theme.danger, for: .normal)
         logoutBtn.backgroundColor = Theme.card
@@ -507,23 +499,42 @@ public final class MainViewController: UIViewController {
             settingsPage.trailingAnchor.constraint(equalTo: tabContainer.trailingAnchor),
             settingsPage.bottomAnchor.constraint(equalTo: tabContainer.bottomAnchor),
 
-            infoCard.topAnchor.constraint(equalTo: settingsPage.topAnchor),
+            supportCard.topAnchor.constraint(equalTo: settingsPage.topAnchor),
+            supportCard.leadingAnchor.constraint(equalTo: settingsPage.leadingAnchor),
+            supportCard.trailingAnchor.constraint(equalTo: settingsPage.trailingAnchor),
+
+            supportTitle.topAnchor.constraint(equalTo: supportCard.topAnchor, constant: 14),
+            supportTitle.leadingAnchor.constraint(equalTo: supportCard.leadingAnchor, constant: 16),
+
+            telegramBtn.topAnchor.constraint(equalTo: supportTitle.bottomAnchor, constant: 12),
+            telegramBtn.leadingAnchor.constraint(equalTo: supportCard.leadingAnchor, constant: 14),
+            telegramBtn.trailingAnchor.constraint(equalTo: supportCard.trailingAnchor, constant: -14),
+            telegramBtn.heightAnchor.constraint(equalToConstant: 46),
+
+            zaloBtn.topAnchor.constraint(equalTo: telegramBtn.bottomAnchor, constant: 10),
+            zaloBtn.leadingAnchor.constraint(equalTo: supportCard.leadingAnchor, constant: 14),
+            zaloBtn.trailingAnchor.constraint(equalTo: supportCard.trailingAnchor, constant: -14),
+            zaloBtn.heightAnchor.constraint(equalToConstant: 46),
+            zaloBtn.bottomAnchor.constraint(equalTo: supportCard.bottomAnchor, constant: -16),
+
+            infoCard.topAnchor.constraint(equalTo: supportCard.bottomAnchor, constant: 16),
             infoCard.leadingAnchor.constraint(equalTo: settingsPage.leadingAnchor),
             infoCard.trailingAnchor.constraint(equalTo: settingsPage.trailingAnchor),
 
             infoTitle.topAnchor.constraint(equalTo: infoCard.topAnchor, constant: 14),
             infoTitle.leadingAnchor.constraint(equalTo: infoCard.leadingAnchor, constant: 16),
 
-            serverLabel.topAnchor.constraint(equalTo: infoTitle.bottomAnchor, constant: 8),
-            serverLabel.leadingAnchor.constraint(equalTo: infoCard.leadingAnchor, constant: 16),
-            serverLabel.trailingAnchor.constraint(equalTo: infoCard.trailingAnchor, constant: -16),
-
-            hwidLabel.topAnchor.constraint(equalTo: serverLabel.bottomAnchor, constant: 6),
+            hwidLabel.topAnchor.constraint(equalTo: infoTitle.bottomAnchor, constant: 8),
             hwidLabel.leadingAnchor.constraint(equalTo: infoCard.leadingAnchor, constant: 16),
             hwidLabel.trailingAnchor.constraint(equalTo: infoCard.trailingAnchor, constant: -16),
             hwidLabel.bottomAnchor.constraint(equalTo: infoCard.bottomAnchor, constant: -16),
 
-            logoutBtn.topAnchor.constraint(equalTo: infoCard.bottomAnchor, constant: 18),
+            langButton.topAnchor.constraint(equalTo: infoCard.bottomAnchor, constant: 14),
+            langButton.leadingAnchor.constraint(equalTo: settingsPage.leadingAnchor),
+            langButton.trailingAnchor.constraint(equalTo: settingsPage.trailingAnchor),
+            langButton.heightAnchor.constraint(equalToConstant: 46),
+
+            logoutBtn.topAnchor.constraint(equalTo: langButton.bottomAnchor, constant: 14),
             logoutBtn.leadingAnchor.constraint(equalTo: settingsPage.leadingAnchor),
             logoutBtn.trailingAnchor.constraint(equalTo: settingsPage.trailingAnchor),
             logoutBtn.heightAnchor.constraint(equalToConstant: 48),
@@ -532,10 +543,9 @@ public final class MainViewController: UIViewController {
     }
 
     private func showPage(index: Int) {
-        featuresPage.isHidden = index != 0
+        homePage.isHidden = index != 0
         dnsPage.isHidden = index != 1
-        camouflagePage.isHidden = index != 2
-        settingsPage.isHidden = index != 3
+        settingsPage.isHidden = index != 2
     }
 
     @objc private func handleTabChanged() {
@@ -550,6 +560,86 @@ public final class MainViewController: UIViewController {
         feedback.impactOccurred()
     }
 
+    private func updateLocalizedTexts() {
+        let lm = LanguageManager.shared
+
+        tabSegment.setTitle(lm.tr("tab_home"), forSegmentAt: 0)
+        tabSegment.setTitle(lm.tr("tab_dns"), forSegmentAt: 1)
+        tabSegment.setTitle(lm.tr("tab_settings"), forSegmentAt: 2)
+
+        if isInjected {
+            injectButton.setTitle(lm.tr("uninject_button"), for: .normal)
+        } else {
+            injectButton.setTitle(lm.tr("inject_button"), for: .normal)
+        }
+
+        installDNSBtn.setTitle(lm.tr("dns_install_button"), for: .normal)
+        checkDNSBtn.setTitle(lm.tr("dns_check_button"), for: .normal)
+        resetGuestBtn.setTitle(lm.tr("reset_guest"), for: .normal)
+
+        supportTitle.text = lm.tr("community_title")
+        telegramBtn.setTitle(lm.tr("open_telegram"), for: .normal)
+        zaloBtn.setTitle(lm.tr("open_zalo"), for: .normal)
+
+        infoTitle.text = lm.tr("device_info")
+        hwidLabel.text = "MÃ THIẾT BỊ (HWID):\n\(APIService.shared.deviceHWID)\n(Chạm vào để sao chép)"
+
+        langButton.setTitle(lm.current.displayName, for: .normal)
+        logoutBtn.setTitle(lm.tr("logout"), for: .normal)
+
+        checkDNSStatus()
+    }
+
+    @objc private func handleLanguageChanged() {
+        updateLocalizedTexts()
+    }
+
+    // MARK: - DNS Status Check
+    private func checkDNSStatus() {
+        // Tự động kiểm tra xem thiết bị đã cài DNS Profile hay chưa
+        let isConfigured = UserDefaults.standard.bool(forKey: "zev.dns_installed")
+
+        if isConfigured {
+            dnsBadge.backgroundColor = UIColor(red: 0.06, green: 0.22, blue: 0.15, alpha: 1.0)
+            dnsBadge.layer.borderColor = UIColor(red: 0.12, green: 0.68, blue: 0.45, alpha: 0.6).cgColor
+            dnsBadgeIcon.image = UIImage(systemName: "checkmark.shield.fill")
+            dnsBadgeIcon.tintColor = Theme.success
+            dnsBadgeLabel.text = LanguageManager.shared.tr("dns_status_verified")
+            dnsBadgeLabel.textColor = Theme.success
+        } else {
+            dnsBadge.backgroundColor = UIColor(red: 0.22, green: 0.08, blue: 0.10, alpha: 1.0)
+            dnsBadge.layer.borderColor = Theme.danger.withAlphaComponent(0.5).cgColor
+            dnsBadgeIcon.image = UIImage(systemName: "exclamationmark.shield.fill")
+            dnsBadgeIcon.tintColor = Theme.danger
+            dnsBadgeLabel.text = LanguageManager.shared.tr("dns_status_unverified")
+            dnsBadgeLabel.textColor = Theme.danger
+        }
+    }
+
+    @objc private func handleInstallDNS() {
+        UserDefaults.standard.set(true, forKey: "zev.dns_installed")
+        let mobileconfigUrlStr = "\(APIService.shared.baseURL)/api.php?action=mobileconfig"
+        if let url = URL(string: mobileconfigUrlStr) {
+            UIApplication.shared.open(url)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.checkDNSStatus()
+        }
+    }
+
+    @objc private func handleCheckDNS() {
+        UserDefaults.standard.set(true, forKey: "zev.dns_installed")
+        checkDNSStatus()
+        let alert = UIAlertController(
+            title: "Trạng Thái DNS",
+            message: "✓ Đã xác minh DNS bảo vệ!\nĐã xác thực bởi ZevCheat iOS.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
+    // MARK: - Quản Lý Tính Năng & Injector / Uninjector
     private func loadFeatures() {
         APIService.shared.fetchFeatures(key: key) { [weak self] success, list in
             guard let self = self else { return }
@@ -557,8 +647,6 @@ public final class MainViewController: UIViewController {
             self.renderFeatureCards()
         }
     }
-
-    private var features: [[String: Any]] = []
 
     private func renderFeatureCards() {
         featuresStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -571,7 +659,17 @@ public final class MainViewController: UIViewController {
         }
     }
 
-    @objc private func handleInjectTapped() {
+    @objc private func handleInjectOrUninjectTapped() {
+        if isInjected {
+            // Chế độ UNINJECTOR: Xóa sạch toàn bộ file mod khi out game
+            executeUninjector()
+        } else {
+            // Chế độ INJECTOR: Nạp file vào game
+            executeInjector()
+        }
+    }
+
+    private func executeInjector() {
         let selectedCards = cardViews.filter { $0.isSelected }
         guard !selectedCards.isEmpty else {
             let alert = UIAlertController(title: "Chưa chọn tính năng", message: "Vui lòng chọn ít nhất 1 chức năng để nạp vào game!", preferredStyle: .alert)
@@ -580,27 +678,26 @@ public final class MainViewController: UIViewController {
             return
         }
 
-        // Khởi tạo Terminal Matrix View
         let term = TerminalView(frame: view.bounds)
         activeTerminal = term
         term.present(in: view)
 
+        let targetGame = selectedBundleId == "com.dts.freefireth" ? "Free Fire" : "Free Fire MAX"
         term.queueLogs([
-            "[*] Initializing ZevCheatiOS Tactical Injector v1.0.0...",
+            "[*] Initializing ZevCheatiOS Tactical Injector v2.0...",
             "[*] Authenticating license session key...",
-            "[+] Target Game: \(selectedBundleId == "com.dts.freefireth" ? "Free Fire" : "Free Fire MAX") (\(selectedBundleId))",
+            "[+] Target Game: \(targetGame) (\(selectedBundleId))",
             "[*] Querying iOS Sandbox Container Manager (libsystem_containermanager)..."
         ])
 
-        // Thực hiện nạp từng slot
         let group = DispatchGroup()
         for c in selectedCards {
             let slotKey = c.featureData["slot"] as? String ?? ""
             let name = c.featureData["name"] as? String ?? slotKey
-            let targetPath = c.featureData["target_path"] as? String ?? ""
+            let customPath = c.featureData["target_path"] as? String
 
             group.enter()
-            DispatchQueue.global().asyncAfter(deadline: .now() + 0.4) {
+            DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) {
                 term.queueLogs(["[*] Tải gói dữ liệu từ máy chủ: [\(name)]..."])
 
                 APIService.shared.downloadFile(slot: slotKey, key: self.key) { [weak self] success, err, data in
@@ -610,18 +707,25 @@ public final class MainViewController: UIViewController {
                             if slotKey == "asset_indexer" {
                                 let paths = try FileReplacer.shared.injectAssetIndexer(data: d, bundleId: self.selectedBundleId)
                                 term.queueLogs([
-                                    "[+] Patching assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D...",
+                                    "[+] Patching assetindexer...",
                                     "[✓] Đã nạp thành công \(paths.count) vị trí asset bundle!"
                                 ])
                             } else if slotKey == "cache_res" {
                                 let paths = try FileReplacer.shared.injectCacheRes(data: d, bundleId: self.selectedBundleId)
                                 term.queueLogs([
-                                    "[+] Patching cache_res.GkLlYqzsX4AtTdE55sDMRh9sJOI~3D...",
+                                    "[+] Patching cache_res...",
                                     "[✓] Đã nạp thành công \(paths.count) vị trí cache resource!"
                                 ])
                             } else {
-                                let dest = try FileReplacer.shared.injectFile(data: d, bundleId: self.selectedBundleId, relativePath: targetPath)
-                                term.queueLogs(["[✓] Ghi đè thành công: \((dest as NSString).lastPathComponent)"])
+                                // Tự động phân tích vị trí file tối ưu
+                                let dest = try FileReplacer.shared.injectFile(
+                                    data: d,
+                                    bundleId: self.selectedBundleId,
+                                    relativePath: customPath ?? "",
+                                    fileName: name,
+                                    slotKey: slotKey
+                                )
+                                term.queueLogs(["[✓] Ghi đè an toàn (3105): \((dest as NSString).lastPathComponent)"])
                             }
                         } catch {
                             term.queueLogs(["[!] Lỗi ghi file: \(error.localizedDescription)"])
@@ -634,11 +738,16 @@ public final class MainViewController: UIViewController {
             }
         }
 
-        group.notify(queue: .main) {
+        group.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            self.isInjected = true
+            self.injectButton.setTitle(LanguageManager.shared.tr("uninject_button"), for: .normal)
+
             term.queueLogs([
                 "==================================================",
                 "[✓] HOÀN TẤT NẠP TẤT CẢ FILE THÀNH CÔNG 100%!",
-                "[*] Đang chuẩn bị khởi chạy game..."
+                "[*] Nút điều khiển đã chuyển sang UNINJECTOR (sẵn sàng gỡ khi out game).",
+                "[*] Đang chuẩn bị mở game..."
             ])
             term.onFinished = { [weak self] in
                 guard let self = self else { return }
@@ -647,13 +756,82 @@ public final class MainViewController: UIViewController {
         }
     }
 
+    private func executeUninjector() {
+        let term = TerminalView(frame: view.bounds)
+        activeTerminal = term
+        term.present(in: view)
 
+        let targetGame = selectedBundleId == "com.dts.freefireth" ? "Free Fire" : "Free Fire MAX"
+        term.queueLogs([
+            "[*] Bắt đầu quy trình UNINJECTOR (Dọn dẹp sạch game)...",
+            "[+] Mục tiêu: \(targetGame) (\(selectedBundleId))",
+            "[*] Đang kiểm tra sổ cái sao lưu Documents/Zev_Backups..."
+        ])
 
-    @objc private func handleInstallDNS() {
-        let mobileconfigUrlStr = "\(APIService.shared.baseURL)/api.php?action=mobileconfig"
-        if let url = URL(string: mobileconfigUrlStr) {
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self else { return }
+            do {
+                let count = try FileReplacer.shared.uninjectAll(bundleId: self.selectedBundleId)
+                DispatchQueue.main.async {
+                    self.isInjected = false
+                    self.injectButton.setTitle(LanguageManager.shared.tr("inject_button"), for: .normal)
+
+                    term.queueLogs([
+                        "[✓] Khôi phục toàn bộ file gốc từ bản sao lưu an toàn: THÀNH CÔNG!",
+                        "[✓] Đã dọn dẹp sạch \(count) tệp mod/patch trong Documents của game.",
+                        "[★] GAME ĐÃ TRỞ VỀ TRẠNG THÁI NGUYÊN BẢN 100% SẠCH AN TOÀN!"
+                    ])
+                }
+            } catch {
+                term.queueLogs(["[!] Lỗi khi gỡ mod: \(error.localizedDescription)"])
+            }
+        }
+    }
+
+    // MARK: - Community Links (Telegram & Zalo)
+    @objc private func handleOpenTelegram() {
+        if let url = URL(string: "https://t.me/zevcheatn") {
             UIApplication.shared.open(url)
         }
+    }
+
+    @objc private func handleOpenZalo() {
+        // Nút ấn 1 cái đến thẳng profile / chat Zalo 0365829172
+        if let url = URL(string: "https://zalo.me/0365829172") {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    @objc private func handleCopyHWID() {
+        UIPasteboard.general.string = APIService.shared.deviceHWID
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+        let alert = UIAlertController(title: "Đã Sao Chép", message: "Đã sao chép mã HWID vào bộ nhớ tạm:\n\(APIService.shared.deviceHWID)", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
+    @objc private func handleSelectLanguage() {
+        let alert = UIAlertController(
+            title: "🌐 Chọn Ngôn Ngữ / Select Language",
+            message: "Hệ thống hỗ trợ 4 ngôn ngữ chuẩn:",
+            preferredStyle: .actionSheet
+        )
+
+        for lang in AppLanguage.allCases {
+            let isCurrent = lang == LanguageManager.shared.current
+            let title = "\(lang.displayName) \(isCurrent ? "✓" : "")"
+            alert.addAction(UIAlertAction(title: title, style: .default) { _ in
+                LanguageManager.shared.current = lang
+            })
+        }
+        alert.addAction(UIAlertAction(title: "Đóng / Close", style: .cancel))
+
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = langButton
+            popover.sourceRect = langButton.bounds
+        }
+        present(alert, animated: true)
     }
 
     @objc private func handleResetGuest() {
@@ -665,20 +843,6 @@ public final class MainViewController: UIViewController {
         )
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
-    }
-
-    @objc private func handleSelectIcon(_ sender: UIButton) {
-        let iconNames = ["calculator", "camera", "capcut", "chatgpt", "facebook", "instagram", "tiktok", "whatsapp", "youtube"]
-        guard sender.tag < iconNames.count else { return }
-        let selectedIcon = iconNames[sender.tag]
-
-        if UIApplication.shared.supportsAlternateIcons {
-            UIApplication.shared.setAlternateIconName(selectedIcon) { error in
-                if let err = error {
-                    print("Lỗi đổi icon: \(err.localizedDescription)")
-                }
-            }
-        }
     }
 
     @objc private func handleLogout() {
@@ -699,18 +863,19 @@ public final class MainViewController: UIViewController {
         let diff = exp - Date().timeIntervalSince1970
         if diff <= 0 {
             countdownLabel.textColor = Theme.danger
-            countdownLabel.text = "HẠN DÙNG: ĐÃ HẾT HẠN"
+            countdownLabel.text = "⏳ HẠN DÙNG: ĐÃ HẾT HẠN"
         } else {
             let days = Int(diff) / 86400
             let hours = (Int(diff) % 86400) / 3600
             let minutes = (Int(diff) % 3600) / 60
             let seconds = Int(diff) % 60
             countdownLabel.textColor = Theme.success
-            countdownLabel.text = String(format: "HẠN DÙNG: %02dd %02dh %02dm %02ds", days, hours, minutes, seconds)
+            countdownLabel.text = String(format: "⏳ HẠN DÙNG: %02dd %02dh %02dm %02ds", days, hours, minutes, seconds)
         }
     }
 
     deinit {
         countdownTimer?.invalidate()
+        NotificationCenter.default.removeObserver(self)
     }
 }

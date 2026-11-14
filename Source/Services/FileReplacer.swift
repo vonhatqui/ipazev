@@ -1,6 +1,6 @@
 import Foundation
 
-/// Dịch vụ tải và nạp trực tiếp file cache vào thư mục Documents của Free Fire (Chuẩn kiến trúc Aurora Injector)
+/// Dịch vụ tải, phân tích vị trí và nạp/gỡ trực tiếp file cache vào Documents của Free Fire (Chuẩn kiến trúc Aurora Injector)
 public final class FileReplacer {
 
     public static let shared = FileReplacer()
@@ -12,21 +12,64 @@ public final class FileReplacer {
     private let compulsorySubpath = "Documents/contentcache/Compulsory/ios/gameassetbundles"
     private let avatarSubpath = "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar"
 
+    /// Logic thông minh phân tích file từ máy chủ để tự động định tuyến vị trí đặt trong Documents
+    public func resolveTargetPath(fileName: String, slotKey: String = "", customPath: String? = nil) -> String {
+        if let custom = customPath, !custom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return custom
+        }
+
+        let lowerName = fileName.lowercased()
+        let lowerSlot = slotKey.lowercased()
+
+        // 1. Aim / Headshot / Bullet / Hitbox Cache Engine
+        if lowerName.contains("aim") || lowerName.contains("bullet") || lowerName.contains("headshot") || lowerName.contains("hitbox") || lowerSlot.contains("aim") {
+            if lowerName.contains("cache") || lowerName.hasSuffix(".bin") {
+                return "Documents/aim-cache.bin"
+            }
+            return "Documents/\(fileName)"
+        }
+
+        // 2. Assembly CSharp binary patch
+        if lowerName.contains("assembly") || lowerName.contains("csharp") || lowerName.hasSuffix(".bytes") || lowerSlot.contains("assembly") {
+            return "Documents/Assembly-CSharp-patch.bytes"
+        }
+
+        // 3. Asset Indexer
+        if lowerName.contains("assetindexer") || lowerSlot.contains("asset") {
+            return "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"
+        }
+
+        // 4. Cache Resource
+        if lowerName.contains("cache_res") || lowerSlot.contains("cache_res") {
+            return "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/cache_res.GkLlYqzsX4AtTdE55sDMRh9sJOI~3D"
+        }
+
+        // 5. Avatar Bundles / Skin / Weapon 3D Mod
+        if lowerName.contains("avatar") || lowerName.contains("skin") || lowerName.hasSuffix(".bundle") || lowerSlot.contains("skin") {
+            return "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/\(fileName)"
+        }
+
+        // 6. Local Configuration / Proxy DNS setting
+        if lowerName.contains("config") || lowerName.hasSuffix(".json") {
+            return "Documents/localConfig.json"
+        }
+
+        // Mặc định nạp thẳng vào Documents
+        return "Documents/\(fileName)"
+    }
+
     /// Nạp file nhị phân vào đường dẫn mục tiêu trong Game Container
-    /// - Parameters:
-    ///   - data: Dữ liệu nhị phân của file tải từ server
-    ///   - bundleId: Bundle ID của game (com.dts.freefireth hoặc com.dts.freefiremax)
-    ///   - relativePath: Đường dẫn tương đối (VD: Documents/localConfig.json)
-    /// - Returns: Đường dẫn file thực tế trên thiết bị
     @discardableResult
-    public func injectFile(data: Data, bundleId: String, relativePath: String) throws -> String {
+    public func injectFile(data: Data, bundleId: String, relativePath: String, fileName: String = "", slotKey: String = "") throws -> String {
         guard let containerPath = ContainerResolver.shared.resolveContainerPath(bundleId: bundleId) else {
             throw NSError(domain: "ZevCheatiOS", code: 404, userInfo: [
                 NSLocalizedDescriptionKey: "Không tìm thấy Sandbox của game (\(bundleId)). Vui lòng mở game ít nhất 1 lần để tạo Documents!"
             ])
         }
 
-        let fullDestPath = (containerPath as NSString).appendingPathComponent(relativePath)
+        // Tự động phân tích đường dẫn tối ưu nếu relativePath rỗng
+        let targetRel = relativePath.isEmpty ? resolveTargetPath(fileName: fileName, slotKey: slotKey) : relativePath
+        let fullDestPath = (containerPath as NSString).appendingPathComponent(targetRel)
         let parentDir = (fullDestPath as NSString).deletingLastPathComponent
 
         // Tạo thư mục cha nếu chưa có
@@ -34,16 +77,21 @@ public final class FileReplacer {
             try fileManager.createDirectory(atPath: parentDir, withIntermediateDirectories: true, attributes: nil)
         }
 
+        let backupDir = (containerPath as NSString).appendingPathComponent("Documents/Zev_Backups")
+        if !fileManager.fileExists(atPath: backupDir) {
+            try? fileManager.createDirectory(atPath: backupDir, withIntermediateDirectories: true, attributes: nil)
+        }
+
+        // Ghi nhận file vào danh sách sổ cái ledger để Uninject chuẩn xác
+        recordInjectedPath(targetRel, in: backupDir)
+
         // Tạo bản backup an toàn nếu file cũ đã tồn tại
         if fileManager.fileExists(atPath: fullDestPath) {
-            let backupDir = (containerPath as NSString).appendingPathComponent("Documents/Zev_Backups")
-            if !fileManager.fileExists(atPath: backupDir) {
-                try? fileManager.createDirectory(atPath: backupDir, withIntermediateDirectories: true, attributes: nil)
+            let safeName = targetRel.replacingOccurrences(of: "/", with: "___")
+            let backupPath = (backupDir as NSString).appendingPathComponent("\(safeName).bak")
+            if !fileManager.fileExists(atPath: backupPath) {
+                try? fileManager.copyItem(atPath: fullDestPath, toPath: backupPath)
             }
-            let fileName = (fullDestPath as NSString).lastPathComponent
-            let backupPath = (backupDir as NSString).appendingPathComponent("\(fileName).bak")
-            try? fileManager.removeItem(atPath: backupPath)
-            try? fileManager.copyItem(atPath: fullDestPath, toPath: backupPath)
         }
 
         // Áp dụng cơ chế thay thế tệp an toàn (Safe Atomic Replacement) từ lõi 3105
@@ -60,7 +108,85 @@ public final class FileReplacer {
         return fullDestPath
     }
 
-    /// Tự động tìm và ghi đè toàn bộ các biến thể assetindexer (bao gồm assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D)
+    /// Ghi nhận đường dẫn tương đối đã inject vào ledger file
+    private func recordInjectedPath(_ relPath: String, in backupDir: String) {
+        let ledgerPath = (backupDir as NSString).appendingPathComponent("injected_ledger.json")
+        var list: [String] = []
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: ledgerPath)),
+           let arr = try? JSONSerialization.jsonObject(with: data) as? [String] {
+            list = arr
+        }
+        if !list.contains(relPath) {
+            list.append(relPath)
+            if let outData = try? JSONSerialization.data(withJSONObject: list, options: .prettyPrinted) {
+                try? outData.write(to: URL(fileURLWithPath: ledgerPath), options: .atomic)
+            }
+        }
+    }
+
+    /// Khôi phục toàn bộ trạng thái gốc của game (UNINJECTOR - Xóa sạch mọi mod/file nạp vào)
+    public func uninjectAll(bundleId: String) throws -> Int {
+        guard let containerPath = ContainerResolver.shared.resolveContainerPath(bundleId: bundleId) else {
+            throw NSError(domain: "ZevCheatiOS", code: 404, userInfo: [
+                NSLocalizedDescriptionKey: "Không tìm thấy Sandbox của game (\(bundleId))."
+            ])
+        }
+
+        var count = 0
+        let backupDir = (containerPath as NSString).appendingPathComponent("Documents/Zev_Backups")
+        let ledgerPath = (backupDir as NSString).appendingPathComponent("injected_ledger.json")
+
+        // 1. Khôi phục từ danh sách ledger
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: ledgerPath)),
+           let list = try? JSONSerialization.jsonObject(with: data) as? [String] {
+            for rel in list {
+                let fullDest = (containerPath as NSString).appendingPathComponent(rel)
+                let safeName = rel.replacingOccurrences(of: "/", with: "___")
+                let backupFile = (backupDir as NSString).appendingPathComponent("\(safeName).bak")
+
+                if fileManager.fileExists(atPath: backupFile) {
+                    // Trả lại file gốc
+                    try? fileManager.removeItem(atPath: fullDest)
+                    try? fileManager.copyItem(atPath: backupFile, toPath: fullDest)
+                    try? fileManager.removeItem(atPath: backupFile)
+                    count += 1
+                } else {
+                    // File này nạp mới hoàn toàn, xóa bỏ để trả về nguyên bản
+                    if fileManager.fileExists(atPath: fullDest) {
+                        try? fileManager.removeItem(atPath: fullDest)
+                        count += 1
+                    }
+                }
+            }
+        }
+
+        // 2. Quét dọn các file mod phổ biến nếu còn sót lại
+        let commonCleanPaths = [
+            "Documents/aim-cache.bin",
+            "Documents/Assembly-CSharp-patch.bytes",
+            "Documents/localConfig.json"
+        ]
+        for rel in commonCleanPaths {
+            let fullPath = (containerPath as NSString).appendingPathComponent(rel)
+            let safeName = rel.replacingOccurrences(of: "/", with: "___")
+            let backupFile = (backupDir as NSString).appendingPathComponent("\(safeName).bak")
+            if fileManager.fileExists(atPath: backupFile) {
+                try? fileManager.removeItem(atPath: fullPath)
+                try? fileManager.copyItem(atPath: backupFile, toPath: fullPath)
+                try? fileManager.removeItem(atPath: backupFile)
+                count += 1
+            } else if fileManager.fileExists(atPath: fullPath) {
+                try? fileManager.removeItem(atPath: fullPath)
+                count += 1
+            }
+        }
+
+        // Xóa sạch thư mục backup
+        try? fileManager.removeItem(atPath: backupDir)
+        return count
+    }
+
+    /// Tự động tìm và ghi đè toàn bộ các biến thể assetindexer
     public func injectAssetIndexer(data: Data, bundleId: String) throws -> [String] {
         guard let containerPath = ContainerResolver.shared.resolveContainerPath(bundleId: bundleId) else {
             throw NSError(domain: "ZevCheatiOS", code: 404, userInfo: [
@@ -81,7 +207,6 @@ public final class FileReplacer {
                 try? fileManager.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
             }
 
-            // Quét tìm tất cả file có tiền tố assetindexer. trong thư mục
             if let files = try? fileManager.contentsOfDirectory(atPath: dir) {
                 for f in files where f.hasPrefix("assetindexer.") {
                     let dest = (dir as NSString).appendingPathComponent(f)
@@ -90,7 +215,6 @@ public final class FileReplacer {
                 }
             }
 
-            // Luôn đảm bảo file specificName tồn tại
             let specificDest = (dir as NSString).appendingPathComponent(specificName)
             try? data.write(to: URL(fileURLWithPath: specificDest), options: .atomic)
             if !injectedPaths.contains(specificDest) {
@@ -101,7 +225,7 @@ public final class FileReplacer {
         return injectedPaths
     }
 
-    /// Tự động tìm và ghi đè toàn bộ các biến thể cache_res (bao gồm cache_res.GkLlYqzsX4AtTdE55sDMRh9sJOI~3D)
+    /// Tự động tìm và ghi đè toàn bộ các biến thể cache_res
     public func injectCacheRes(data: Data, bundleId: String) throws -> [String] {
         guard let containerPath = ContainerResolver.shared.resolveContainerPath(bundleId: bundleId) else {
             throw NSError(domain: "ZevCheatiOS", code: 404, userInfo: [
@@ -122,7 +246,6 @@ public final class FileReplacer {
                 try? fileManager.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
             }
 
-            // Quét tìm tất cả file có tiền tố cache_res. trong thư mục
             if let files = try? fileManager.contentsOfDirectory(atPath: dir) {
                 for f in files where f.hasPrefix("cache_res.") {
                     let dest = (dir as NSString).appendingPathComponent(f)
@@ -131,7 +254,6 @@ public final class FileReplacer {
                 }
             }
 
-            // Luôn đảm bảo file specificName tồn tại
             let specificDest = (dir as NSString).appendingPathComponent(specificName)
             try? data.write(to: URL(fileURLWithPath: specificDest), options: .atomic)
             if !injectedPaths.contains(specificDest) {
@@ -142,7 +264,7 @@ public final class FileReplacer {
         return injectedPaths
     }
 
-    /// Reset tài khoản khách (Guest) bằng cách xóa toàn bộ định danh guest
+    /// Reset tài khoản khách (Guest)
     public func resetGuestAccount(bundleId: String) -> Bool {
         guard let container = ContainerResolver.shared.resolveContainerPath(bundleId: bundleId) else {
             return false
@@ -160,7 +282,7 @@ public final class FileReplacer {
         return true
     }
 
-    /// Tự động khởi chạy Game Free Fire sau khi nạp cache xong qua LSApplicationWorkspace
+    /// Tự động khởi chạy Game Free Fire sau khi nạp cache xong
     public func launchGame(bundleId: String) -> Bool {
         guard let workspaceClass = NSClassFromString("LSApplicationWorkspace") as AnyObject? else {
             return false
