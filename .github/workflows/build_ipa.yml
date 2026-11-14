@@ -10,15 +10,14 @@ on:
 jobs:
   build:
     name: Compile Swift & Build IPA (arm64)
-    runs-on: macos-14
+    runs-on: macos-13
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Xcode Environment
+      - name: Verify Xcode Environment
         run: |
-          sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-path
 
@@ -34,4 +33,3 @@ jobs:
           path: ZevCheatiOS.ipa
           if-no-files-found: error
           retention-days: 30
-
