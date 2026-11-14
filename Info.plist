@@ -12,68 +12,13 @@
     <string>ZevCheatiOS</string>
     <key>CFBundleIcons</key>
     <dict>
-        <key>CFBundleAlternateIcons</key>
-        <dict>
-            <key>calculator</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>calculator</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-            <key>camera</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>camera</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-            <key>capcut</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>capcut</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-            <key>chatgpt</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>chatgpt</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-            <key>facebook</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>facebook</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-            <key>instagram</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>instagram</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-            <key>tiktok</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>tiktok</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-            <key>whatsapp</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>whatsapp</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-            <key>youtube</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array><string>youtube</string></array>
-                <key>UIPrerenderedIcon</key><true/>
-            </dict>
-        </dict>
         <key>CFBundlePrimaryIcon</key>
         <dict>
             <key>CFBundleIconFiles</key>
             <array>
                 <string>AppIcon60x60</string>
+                <string>AppIcon-512</string>
+                <string>AppIcon-1024</string>
             </array>
             <key>CFBundleIconName</key>
             <string>AppIcon</string>

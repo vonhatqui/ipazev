@@ -1,0 +1,5 @@
+*.bak
+build_temp/
+build_out/
+*.ipa
+.DS_Store

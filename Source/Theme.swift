@@ -24,3 +24,4 @@ public enum Theme {
     public static let danger = UIColor(red: 0.937, green: 0.267, blue: 0.267, alpha: 1.0) // #ef4444
     public static let warning = UIColor(red: 0.961, green: 0.620, blue: 0.043, alpha: 1.0) // #f59e0b
 }
+
