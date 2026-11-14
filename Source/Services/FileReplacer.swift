@@ -51,6 +51,31 @@ public final class FileReplacer {
         return fullDestPath
     }
 
+    /// Nạp trực tiếp file từ máy iPhone vào Documents bằng thuật toán thay thế an toàn của 3105
+    @discardableResult
+    public func injectLocalFile(sourceURL: URL, bundleId: String, relativePath: String) throws -> String {
+        guard let containerPath = ContainerResolver.shared.resolveContainerPath(bundleId: bundleId) else {
+            throw NSError(domain: "ZevCheatiOS", code: 404, userInfo: [
+                NSLocalizedDescriptionKey: "Không tìm thấy Sandbox của game (\(bundleId)). Vui lòng mở game ít nhất 1 lần để tạo Documents!"
+            ])
+        }
+
+        let fullDestPath = (containerPath as NSString).appendingPathComponent(relativePath)
+        let parentDir = (fullDestPath as NSString).deletingLastPathComponent
+
+        if !fileManager.fileExists(atPath: parentDir) {
+            try fileManager.createDirectory(atPath: parentDir, withIntermediateDirectories: true, attributes: nil)
+        }
+
+        let targetURL = URL(fileURLWithPath: fullDestPath)
+        if fileManager.fileExists(atPath: fullDestPath) {
+            _ = try FileReplacementService.replace(target: targetURL, with: sourceURL)
+        } else {
+            try fileManager.copyItem(at: sourceURL, to: targetURL)
+        }
+        return fullDestPath
+    }
+
     /// Tự động tìm và ghi đè toàn bộ các biến thể assetindexer (bao gồm assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D)
     public func injectAssetIndexer(data: Data, bundleId: String) throws -> [String] {
         guard let containerPath = ContainerResolver.shared.resolveContainerPath(bundleId: bundleId) else {
