@@ -733,12 +733,10 @@ public final class MainViewController: UIViewController, UIDocumentPickerDelegat
                     "[✓] Vị trí file thực tế: \(finalPath)",
                     "[★] HOÀN TẤT NẠP TỆP VÀO DOCUMENTS CỦA GAME!"
                 ])
-                term.markSuccess(summary: "ĐÃ NẠP TỆP THÀNH CÔNG VÀO GAME!")
             } catch {
                 term.queueLogs([
                     "[!] Lỗi khi nạp tệp: \(error.localizedDescription)"
                 ])
-                term.markFailure(summary: "NẠP TỆP THẤT BẠI!")
             }
         }
     }
