@@ -55,8 +55,11 @@ echo "[3.5] Copying App Icons & Resources..."
 if [ -d "Resources/AppIcons" ]; then
     cp -r Resources/AppIcons/* "${PAYLOAD_DIR}/"
 fi
-if [ -f "Resources/AppIcons/AppIcon-512.png" ]; then
-    cp "Resources/AppIcons/AppIcon-512.png" "${PAYLOAD_DIR}/logo.png"
+if [ -d "Resources/Images" ]; then
+    cp -r Resources/Images/* "${PAYLOAD_DIR}/"
+fi
+if [ -f "Resources/Images/logo.png" ]; then
+    cp "Resources/Images/logo.png" "${PAYLOAD_DIR}/logo.png"
 fi
 
 echo "[3.6] Ad-hoc code signing Mach-O executable..."

@@ -10,12 +10,26 @@ public final class APIService: NSObject, URLSessionDelegate {
     public var baseURL: String {
         get {
             if let custom = UserDefaults.standard.string(forKey: "zev.custom_base_url"), !custom.isEmpty {
-                return custom
+                var clean = custom.trimmingCharacters(in: .whitespacesAndNewlines)
+                if clean.hasSuffix("/zev_panel") {
+                    clean = clean.replacingOccurrences(of: "/zev_panel", with: "")
+                }
+                while clean.hasSuffix("/") {
+                    clean = String(clean.dropLast())
+                }
+                return clean
             }
-            return "https://crackbomaydihihi.sbs/zev_panel"
+            return "https://crackbomaydihihi.sbs"
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: "zev.custom_base_url")
+            var clean = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if clean.hasSuffix("/zev_panel") {
+                clean = clean.replacingOccurrences(of: "/zev_panel", with: "")
+            }
+            while clean.hasSuffix("/") {
+                clean = String(clean.dropLast())
+            }
+            UserDefaults.standard.set(clean, forKey: "zev.custom_base_url")
         }
     }
 
@@ -83,8 +97,19 @@ public final class APIService: NSObject, URLSessionDelegate {
 
     /// Xác thực Key Bản Quyền với server
     public func validateKey(key: String, completion: @escaping (Bool, String?, [String: Any]?) -> Void) {
-        guard let url = URL(string: "\(baseURL)/api.php?action=validateKey") else {
-            completion(false, "URL máy chủ không hợp lệ!", nil)
+        let cleanKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        let endpoints = [
+            "\(baseURL)/api.php?action=validateKey",
+            "\(baseURL)/zev_panel/api.php?action=validateKey"
+        ]
+        performValidateKey(endpoints: endpoints, key: cleanKey, completion: completion)
+    }
+
+    private func performValidateKey(endpoints: [String], key: String, completion: @escaping (Bool, String?, [String: Any]?) -> Void) {
+        guard let urlStr = endpoints.first, let url = URL(string: urlStr) else {
+            DispatchQueue.main.async {
+                completion(false, "Không thể kết nối đến máy chủ!", nil)
+            }
             return
         }
 
@@ -94,21 +119,41 @@ public final class APIService: NSObject, URLSessionDelegate {
         req.setValue(deviceHWID, forHTTPHeaderField: "X-Zev-HWID")
 
         let body: [String: Any] = [
-            "key": key.trimmingCharacters(in: .whitespacesAndNewlines),
+            "key": key,
             "hwid": deviceHWID,
             "model": UIDevice.current.model
         ]
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        session.dataTask(with: req) { data, _, err in
+        session.dataTask(with: req) { [weak self] data, response, err in
+            guard let self = self else { return }
+
+            if let http = response as? HTTPURLResponse, http.statusCode == 404, endpoints.count > 1 {
+                let remaining = Array(endpoints.dropFirst())
+                self.performValidateKey(endpoints: remaining, key: key, completion: completion)
+                return
+            }
+
             if let err = err {
                 DispatchQueue.main.async {
                     completion(false, "Lỗi kết nối máy chủ: \(err.localizedDescription)", nil)
                 }
                 return
             }
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    completion(false, "Máy chủ không phản hồi dữ liệu!", nil)
+                }
+                return
+            }
+
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                if let raw = String(data: data, encoding: .utf8), raw.contains("404 Not Found"), endpoints.count > 1 {
+                    let remaining = Array(endpoints.dropFirst())
+                    self.performValidateKey(endpoints: remaining, key: key, completion: completion)
+                    return
+                }
                 DispatchQueue.main.async {
                     completion(false, "Phản hồi máy chủ không hợp lệ!", nil)
                 }
@@ -116,7 +161,7 @@ public final class APIService: NSObject, URLSessionDelegate {
             }
 
             let valid = (json["valid"] as? Bool) ?? (json["ok"] as? Bool) ?? false
-            let msg = (json["message"] as? String) ?? (valid ? "Xác thực thành công!" : "Key không hợp lệ!")
+            let msg = (json["message"] as? String) ?? (valid ? "Xác thực thành công!" : "Khóa không hợp lệ hoặc đã hết hạn.")
             DispatchQueue.main.async {
                 completion(valid, msg, json)
             }

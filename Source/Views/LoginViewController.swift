@@ -1,31 +1,87 @@
 import UIKit
+import Darwin
 
-/// Màn hình Đăng nhập & Xác thực License chuẩn phong cách Aurora Dark Cyber
+// MARK: - Device Model Identifier Extension
+extension UIDevice {
+    var modelName: String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        let identifier = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8, value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+
+        switch identifier {
+        case "iPhone16,1": return "iPhone 15 Pro"
+        case "iPhone16,2": return "iPhone 15 Pro Max"
+        case "iPhone15,4": return "iPhone 15"
+        case "iPhone15,5": return "iPhone 15 Plus"
+        case "iPhone15,2": return "iPhone 14 Pro"
+        case "iPhone15,3": return "iPhone 14 Pro Max"
+        case "iPhone14,7": return "iPhone 14"
+        case "iPhone14,8": return "iPhone 14 Plus"
+        case "iPhone14,2": return "iPhone 13 Pro"
+        case "iPhone14,3": return "iPhone 13 Pro Max"
+        case "iPhone14,5": return "iPhone 13"
+        case "iPhone14,4": return "iPhone 13 mini"
+        case "iPhone13,3": return "iPhone 12 Pro"
+        case "iPhone13,4": return "iPhone 12 Pro Max"
+        case "iPhone13,2": return "iPhone 12"
+        case "iPhone13,1": return "iPhone 12 mini"
+        case "iPhone12,1": return "iPhone 11"
+        case "iPhone12,3": return "iPhone 11 Pro"
+        case "iPhone12,5": return "iPhone 11 Pro Max"
+        case "iPhone11,2": return "iPhone XS"
+        case "iPhone11,4", "iPhone11,6": return "iPhone XS Max"
+        case "iPhone11,8": return "iPhone XR"
+        case "iPhone10,3", "iPhone10,6": return "iPhone X"
+        case "x86_64", "arm64", "i386": return "iPhone 15 Pro Max"
+        default:
+            if identifier.starts(with: "iPhone") {
+                return identifier.replacingOccurrences(of: ",", with: ".")
+            }
+            return UIDevice.current.model
+        }
+    }
+}
+
+/// Màn hình Đăng nhập & Xác thực License chuẩn phong cách Aurora (ProxyIPA)
 public final class LoginViewController: UIViewController, UITextFieldDelegate {
 
     private let backgroundView = ZevBackgroundView()
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
+    // Header Logo & Aurora Title
     private let logoImageView = UIImageView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
-    private let badgeView = VerifiedBadge()
 
-    private let cardContainer = UIView()
-    private let hwidBox = UIView()
-    private let hwidTitleLabel = UILabel()
-    private let hwidValueLabel = UILabel()
-    private let copyHwidButton = UIButton(type: .system)
+    // Device Info Card (Aurora Style)
+    private let deviceCardView = UIView()
+    private let modelTitleLabel = UILabel()
+    private let modelValueLabel = UILabel()
+    private let osTitleLabel = UILabel()
+    private let osValueLabel = UILabel()
+    private let supportTitleLabel = UILabel()
+    private let verifiedBadge = UIView()
+    private let verifiedIcon = UIImageView()
+    private let verifiedLabel = UILabel()
 
+    // Key Input Section
+    private let keySectionLabel = UILabel()
     private let keyFieldContainer = UIView()
     private let keyTextField = UITextField()
     private let pasteKeyButton = UIButton(type: .system)
 
-    private let activateButton = NeonButton(title: "KÍCH HOẠT LICENSE")
-    private let langButton = UIButton(type: .system)
+    // Status / Warning Label
     private let statusLabel = UILabel()
+
+    // Action Button & Lang Pill
+    private let activateButton = NeonButton(title: "Kích Hoạt")
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
+    private let langButton = UIButton(type: .system)
 
     public override func viewDidLoad() {
         super.viewDidLoad()
@@ -69,7 +125,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
 
-        // 3. Logo Gengar New - Hiển thị 100% trọn vẹn, không bị cắt 1/3
+        // 3. Small Logo (Không viền đen, nền trong suốt hoàn toàn)
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
         logoImageView.contentMode = .scaleAspectFit
         logoImageView.clipsToBounds = false
@@ -78,91 +134,136 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         } else {
             logoImageView.image = UIImage(systemName: "bolt.shield.fill")
         }
-        logoImageView.layer.shadowColor = Theme.accentGlow.cgColor
+        logoImageView.layer.shadowColor = UIColor(red: 0.65, green: 0.35, blue: 0.95, alpha: 1.0).cgColor
         logoImageView.layer.shadowRadius = 14
-        logoImageView.layer.shadowOpacity = 0.65
+        logoImageView.layer.shadowOpacity = 0.55
         logoImageView.layer.shadowOffset = .zero
         contentView.addSubview(logoImageView)
 
-        // 4. Title & Subtitle
+        // 4. Stylized Aurora Gradient Title
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "ZevCheatiOS"
-        titleLabel.font = .systemFont(ofSize: 26, weight: .heavy)
-        titleLabel.textColor = Theme.text
         titleLabel.textAlignment = .center
+        let auroraAttr = NSMutableAttributedString()
+        let letters: [(String, UIColor)] = [
+            ("A", UIColor(red: 0.68, green: 0.38, blue: 0.96, alpha: 1.0)), // Violet
+            ("U", UIColor(red: 0.88, green: 0.36, blue: 0.88, alpha: 1.0)), // Pink-magenta
+            ("R", UIColor(red: 0.68, green: 0.38, blue: 0.96, alpha: 1.0)), // Violet
+            ("O", UIColor(red: 0.22, green: 0.82, blue: 0.96, alpha: 1.0)), // Cyan neon
+            ("R", UIColor(red: 0.96, green: 0.44, blue: 0.72, alpha: 1.0)), // Pink
+            ("A", UIColor(red: 0.96, green: 0.96, blue: 1.00, alpha: 1.0))  // Ice white
+        ]
+        for (char, color) in letters {
+            auroraAttr.append(NSAttributedString(string: char, attributes: [
+                .font: UIFont.systemFont(ofSize: 32, weight: .black),
+                .foregroundColor: color,
+                .kern: 5.0
+            ]))
+        }
+        titleLabel.attributedText = auroraAttr
         contentView.addSubview(titleLabel)
 
+        // 5. Subtitle: PROXYIPA
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.text = "Tactical Container Injector · VIP Edition"
-        subtitleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
-        subtitleLabel.textColor = Theme.accentLight
         subtitleLabel.textAlignment = .center
+        subtitleLabel.attributedText = NSAttributedString(string: "PROXYIPA", attributes: [
+            .font: UIFont.systemFont(ofSize: 11, weight: .bold),
+            .foregroundColor: UIColor(red: 0.60, green: 0.65, blue: 0.75, alpha: 1.0),
+            .kern: 7.0
+        ])
         contentView.addSubview(subtitleLabel)
 
-        // 5. Badge iOS Support
-        badgeView.translatesAutoresizingMaskIntoConstraints = false
-        badgeView.configure(supported: true, text: "iOS 17.0 - 18.2+ VERIFIED / SAFE")
-        contentView.addSubview(badgeView)
+        // 6. Device Info Card (Chuẩn giao diện Aurora)
+        deviceCardView.translatesAutoresizingMaskIntoConstraints = false
+        deviceCardView.backgroundColor = UIColor(red: 0.10, green: 0.08, blue: 0.17, alpha: 0.92)
+        deviceCardView.layer.cornerRadius = 18
+        deviceCardView.layer.cornerCurve = .continuous
+        deviceCardView.layer.borderWidth = 1.0
+        deviceCardView.layer.borderColor = UIColor(white: 1.0, alpha: 0.09).cgColor
+        deviceCardView.isUserInteractionEnabled = true
+        let tapCard = UITapGestureRecognizer(target: self, action: #selector(handleCopyHWID))
+        deviceCardView.addGestureRecognizer(tapCard)
+        contentView.addSubview(deviceCardView)
 
-        // 6. Card Container chính
-        cardContainer.translatesAutoresizingMaskIntoConstraints = false
-        cardContainer.backgroundColor = Theme.card
-        cardContainer.layer.cornerRadius = 20
-        cardContainer.layer.cornerCurve = .continuous
-        cardContainer.layer.borderWidth = 1.2
-        cardContainer.layer.borderColor = Theme.cardStroke.cgColor
-        cardContainer.layer.shadowColor = UIColor.black.cgColor
-        cardContainer.layer.shadowOpacity = 0.4
-        cardContainer.layer.shadowRadius = 10
-        cardContainer.layer.shadowOffset = CGSize(width: 0, height: 4)
-        contentView.addSubview(cardContainer)
+        // Row 1: Model Thiết Bị
+        modelTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        modelTitleLabel.text = "Model Thiết Bị"
+        modelTitleLabel.font = .systemFont(ofSize: 14, weight: .regular)
+        modelTitleLabel.textColor = UIColor(red: 0.62, green: 0.66, blue: 0.76, alpha: 1.0)
+        deviceCardView.addSubview(modelTitleLabel)
 
-        // HWID Box
-        hwidBox.translatesAutoresizingMaskIntoConstraints = false
-        hwidBox.backgroundColor = Theme.bgElevated
-        hwidBox.layer.cornerRadius = 12
-        hwidBox.layer.borderWidth = 1.0
-        hwidBox.layer.borderColor = Theme.cardStroke.cgColor
-        cardContainer.addSubview(hwidBox)
+        modelValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        modelValueLabel.text = UIDevice.current.modelName
+        modelValueLabel.font = .monospacedSystemFont(ofSize: 14, weight: .bold)
+        modelValueLabel.textColor = .white
+        modelValueLabel.textAlignment = .right
+        deviceCardView.addSubview(modelValueLabel)
 
-        hwidTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        hwidTitleLabel.text = "MÃ THIẾT BỊ (HWID)"
-        hwidTitleLabel.font = .systemFont(ofSize: 10, weight: .bold)
-        hwidTitleLabel.textColor = Theme.textDim
-        hwidBox.addSubview(hwidTitleLabel)
+        // Row 2: Phiên Bản iOS
+        osTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        osTitleLabel.text = "Phiên Bản iOS"
+        osTitleLabel.font = .systemFont(ofSize: 14, weight: .regular)
+        osTitleLabel.textColor = UIColor(red: 0.62, green: 0.66, blue: 0.76, alpha: 1.0)
+        deviceCardView.addSubview(osTitleLabel)
 
-        hwidValueLabel.translatesAutoresizingMaskIntoConstraints = false
-        hwidValueLabel.text = APIService.shared.deviceHWID
-        hwidValueLabel.font = .monospacedSystemFont(ofSize: 11, weight: .bold)
-        hwidValueLabel.textColor = Theme.textSub
-        hwidValueLabel.lineBreakMode = .byTruncatingMiddle
-        hwidBox.addSubview(hwidValueLabel)
+        osValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        osValueLabel.text = "iOS \(UIDevice.current.systemVersion)"
+        osValueLabel.font = .monospacedSystemFont(ofSize: 14, weight: .bold)
+        osValueLabel.textColor = .white
+        osValueLabel.textAlignment = .right
+        deviceCardView.addSubview(osValueLabel)
 
-        copyHwidButton.translatesAutoresizingMaskIntoConstraints = false
-        copyHwidButton.setImage(UIImage(systemName: "doc.on.doc.fill"), for: .normal)
-        copyHwidButton.tintColor = Theme.accentLight
-        copyHwidButton.addTarget(self, action: #selector(handleCopyHWID), for: .touchUpInside)
-        hwidBox.addSubview(copyHwidButton)
+        // Row 3: Được Hỗ Trợ -> Badge "Đã xác minh"
+        supportTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        supportTitleLabel.text = "Được Hỗ Trợ"
+        supportTitleLabel.font = .systemFont(ofSize: 14, weight: .regular)
+        supportTitleLabel.textColor = UIColor(red: 0.62, green: 0.66, blue: 0.76, alpha: 1.0)
+        deviceCardView.addSubview(supportTitleLabel)
 
-        // Key Input Container
+        verifiedBadge.translatesAutoresizingMaskIntoConstraints = false
+        verifiedBadge.backgroundColor = UIColor(red: 0.06, green: 0.22, blue: 0.15, alpha: 1.0)
+        verifiedBadge.layer.cornerRadius = 10
+        verifiedBadge.layer.borderWidth = 1.0
+        verifiedBadge.layer.borderColor = UIColor(red: 0.12, green: 0.68, blue: 0.45, alpha: 0.5).cgColor
+        deviceCardView.addSubview(verifiedBadge)
+
+        verifiedIcon.translatesAutoresizingMaskIntoConstraints = false
+        verifiedIcon.image = UIImage(systemName: "checkmark.shield.fill")
+        verifiedIcon.tintColor = UIColor(red: 0.16, green: 0.78, blue: 0.52, alpha: 1.0)
+        verifiedIcon.contentMode = .scaleAspectFit
+        verifiedBadge.addSubview(verifiedIcon)
+
+        verifiedLabel.translatesAutoresizingMaskIntoConstraints = false
+        verifiedLabel.text = "Đã xác minh"
+        verifiedLabel.font = .systemFont(ofSize: 12, weight: .bold)
+        verifiedLabel.textColor = UIColor(red: 0.16, green: 0.78, blue: 0.52, alpha: 1.0)
+        verifiedBadge.addSubview(verifiedLabel)
+
+        // 7. Nhập Khóa Giấy Phép Header
+        keySectionLabel.translatesAutoresizingMaskIntoConstraints = false
+        keySectionLabel.text = "Nhập Khóa Giấy Phép"
+        keySectionLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        keySectionLabel.textColor = UIColor(red: 0.65, green: 0.70, blue: 0.80, alpha: 1.0)
+        contentView.addSubview(keySectionLabel)
+
+        // 8. Key Field Container
         keyFieldContainer.translatesAutoresizingMaskIntoConstraints = false
-        keyFieldContainer.backgroundColor = Theme.bgElevated
+        keyFieldContainer.backgroundColor = UIColor(red: 0.09, green: 0.07, blue: 0.15, alpha: 0.95)
         keyFieldContainer.layer.cornerRadius = 14
-        keyFieldContainer.layer.borderWidth = 1.2
-        keyFieldContainer.layer.borderColor = Theme.cardStroke.cgColor
-        cardContainer.addSubview(keyFieldContainer)
+        keyFieldContainer.layer.cornerCurve = .continuous
+        keyFieldContainer.layer.borderWidth = 1.0
+        keyFieldContainer.layer.borderColor = UIColor(white: 1.0, alpha: 0.12).cgColor
+        contentView.addSubview(keyFieldContainer)
 
         keyTextField.translatesAutoresizingMaskIntoConstraints = false
-        keyTextField.placeholder = "Nhập hoặc dán mã Key VIP..."
-        keyTextField.textColor = Theme.text
-        keyTextField.font = .monospacedSystemFont(ofSize: 14, weight: .bold)
+        keyTextField.textColor = .white
+        keyTextField.font = .monospacedSystemFont(ofSize: 15, weight: .bold)
         keyTextField.autocapitalizationType = .allCharacters
         keyTextField.autocorrectionType = .no
         keyTextField.returnKeyType = .done
         keyTextField.delegate = self
         keyTextField.attributedPlaceholder = NSAttributedString(
-            string: "Nhập mã Key VIP...",
-            attributes: [.foregroundColor: Theme.textDim]
+            string: "ZEV-LIFETIME-01",
+            attributes: [.foregroundColor: UIColor(white: 0.35, alpha: 1.0)]
         )
         keyFieldContainer.addSubview(keyTextField)
 
@@ -173,98 +274,129 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         pasteKeyButton.addTarget(self, action: #selector(handlePasteKey), for: .touchUpInside)
         keyFieldContainer.addSubview(pasteKeyButton)
 
-        // Activate Button
-        activateButton.translatesAutoresizingMaskIntoConstraints = false
-        activateButton.addTarget(self, action: #selector(handleActivate), for: .touchUpInside)
-        cardContainer.addSubview(activateButton)
-
-        // Language Pill Button
-        langButton.translatesAutoresizingMaskIntoConstraints = false
-        langButton.setTitle("🌐 Tiếng Việt (VN)", for: .normal)
-        langButton.titleLabel?.font = .systemFont(ofSize: 12, weight: .semibold)
-        langButton.setTitleColor(Theme.textDim, for: .normal)
-        contentView.addSubview(langButton)
-
-        // Status Label & Activity
+        // 9. Status / Warning Label (Ẩn mặc định, hiển thị khi có lỗi)
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        statusLabel.font = .systemFont(ofSize: 12, weight: .medium)
-        statusLabel.textAlignment = .center
+        statusLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        statusLabel.textColor = UIColor(red: 0.97, green: 0.44, blue: 0.49, alpha: 1.0) // Soft rose red
         statusLabel.numberOfLines = 0
-        statusLabel.textColor = Theme.textSub
-        cardContainer.addSubview(statusLabel)
+        statusLabel.text = ""
+        contentView.addSubview(statusLabel)
+
+        // 10. Activate Button ("Kích Hoạt")
+        activateButton.translatesAutoresizingMaskIntoConstraints = false
+        activateButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
+        activateButton.addTarget(self, action: #selector(handleActivate), for: .touchUpInside)
+        contentView.addSubview(activateButton)
 
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        activityIndicator.color = Theme.accentLight
+        activityIndicator.color = .white
         activityIndicator.hidesWhenStopped = true
-        cardContainer.addSubview(activityIndicator)
+        activateButton.addSubview(activityIndicator)
+
+        // 11. Bottom Language Pill
+        langButton.translatesAutoresizingMaskIntoConstraints = false
+        langButton.setTitle("🌐 Tiếng Việt", for: .normal)
+        langButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
+        langButton.setTitleColor(UIColor(red: 0.72, green: 0.76, blue: 0.86, alpha: 1.0), for: .normal)
+        langButton.backgroundColor = UIColor(red: 0.08, green: 0.06, blue: 0.14, alpha: 0.8)
+        langButton.layer.cornerRadius = 18
+        langButton.layer.borderWidth = 1.0
+        langButton.layer.borderColor = UIColor(white: 1.0, alpha: 0.08).cgColor
+        contentView.addSubview(langButton)
 
         // Layout Constraints
         NSLayoutConstraint.activate([
-            logoImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            // Logo
+            logoImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 14),
             logoImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            logoImageView.widthAnchor.constraint(equalToConstant: 120),
-            logoImageView.heightAnchor.constraint(equalToConstant: 120),
+            logoImageView.widthAnchor.constraint(equalToConstant: 72),
+            logoImageView.heightAnchor.constraint(equalToConstant: 72),
 
+            // Aurora Title & Subtitle
             titleLabel.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 10),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
             subtitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             subtitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
-            badgeView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 10),
-            badgeView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            // Device Info Card
+            deviceCardView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 22),
+            deviceCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            deviceCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
-            cardContainer.topAnchor.constraint(equalTo: badgeView.bottomAnchor, constant: 18),
-            cardContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            cardContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            // Row 1
+            modelTitleLabel.topAnchor.constraint(equalTo: deviceCardView.topAnchor, constant: 18),
+            modelTitleLabel.leadingAnchor.constraint(equalTo: deviceCardView.leadingAnchor, constant: 18),
 
-            hwidBox.topAnchor.constraint(equalTo: cardContainer.topAnchor, constant: 16),
-            hwidBox.leadingAnchor.constraint(equalTo: cardContainer.leadingAnchor, constant: 16),
-            hwidBox.trailingAnchor.constraint(equalTo: cardContainer.trailingAnchor, constant: -16),
-            hwidBox.heightAnchor.constraint(equalToConstant: 50),
+            modelValueLabel.centerYAnchor.constraint(equalTo: modelTitleLabel.centerYAnchor),
+            modelValueLabel.trailingAnchor.constraint(equalTo: deviceCardView.trailingAnchor, constant: -18),
+            modelValueLabel.leadingAnchor.constraint(greaterThanOrEqualTo: modelTitleLabel.trailingAnchor, constant: 10),
 
-            hwidTitleLabel.topAnchor.constraint(equalTo: hwidBox.topAnchor, constant: 8),
-            hwidTitleLabel.leadingAnchor.constraint(equalTo: hwidBox.leadingAnchor, constant: 12),
+            // Row 2
+            osTitleLabel.topAnchor.constraint(equalTo: modelTitleLabel.bottomAnchor, constant: 16),
+            osTitleLabel.leadingAnchor.constraint(equalTo: deviceCardView.leadingAnchor, constant: 18),
 
-            hwidValueLabel.bottomAnchor.constraint(equalTo: hwidBox.bottomAnchor, constant: -8),
-            hwidValueLabel.leadingAnchor.constraint(equalTo: hwidBox.leadingAnchor, constant: 12),
-            hwidValueLabel.trailingAnchor.constraint(equalTo: copyHwidButton.leadingAnchor, constant: -8),
+            osValueLabel.centerYAnchor.constraint(equalTo: osTitleLabel.centerYAnchor),
+            osValueLabel.trailingAnchor.constraint(equalTo: deviceCardView.trailingAnchor, constant: -18),
 
-            copyHwidButton.trailingAnchor.constraint(equalTo: hwidBox.trailingAnchor, constant: -10),
-            copyHwidButton.centerYAnchor.constraint(equalTo: hwidBox.centerYAnchor),
-            copyHwidButton.widthAnchor.constraint(equalToConstant: 30),
-            copyHwidButton.heightAnchor.constraint(equalToConstant: 30),
+            // Row 3
+            supportTitleLabel.topAnchor.constraint(equalTo: osTitleLabel.bottomAnchor, constant: 18),
+            supportTitleLabel.leadingAnchor.constraint(equalTo: deviceCardView.leadingAnchor, constant: 18),
+            supportTitleLabel.bottomAnchor.constraint(equalTo: deviceCardView.bottomAnchor, constant: -18),
 
-            keyFieldContainer.topAnchor.constraint(equalTo: hwidBox.bottomAnchor, constant: 14),
-            keyFieldContainer.leadingAnchor.constraint(equalTo: cardContainer.leadingAnchor, constant: 16),
-            keyFieldContainer.trailingAnchor.constraint(equalTo: cardContainer.trailingAnchor, constant: -16),
-            keyFieldContainer.heightAnchor.constraint(equalToConstant: 48),
+            verifiedBadge.centerYAnchor.constraint(equalTo: supportTitleLabel.centerYAnchor),
+            verifiedBadge.trailingAnchor.constraint(equalTo: deviceCardView.trailingAnchor, constant: -18),
+            verifiedBadge.heightAnchor.constraint(equalToConstant: 28),
 
-            keyTextField.leadingAnchor.constraint(equalTo: keyFieldContainer.leadingAnchor, constant: 14),
+            verifiedIcon.leadingAnchor.constraint(equalTo: verifiedBadge.leadingAnchor, constant: 8),
+            verifiedIcon.centerYAnchor.constraint(equalTo: verifiedBadge.centerYAnchor),
+            verifiedIcon.widthAnchor.constraint(equalToConstant: 14),
+            verifiedIcon.heightAnchor.constraint(equalToConstant: 14),
+
+            verifiedLabel.leadingAnchor.constraint(equalTo: verifiedIcon.trailingAnchor, constant: 6),
+            verifiedLabel.trailingAnchor.constraint(equalTo: verifiedBadge.trailingAnchor, constant: -10),
+            verifiedLabel.centerYAnchor.constraint(equalTo: verifiedBadge.centerYAnchor),
+
+            // Section Label
+            keySectionLabel.topAnchor.constraint(equalTo: deviceCardView.bottomAnchor, constant: 22),
+            keySectionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
+            keySectionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
+
+            // Input Box
+            keyFieldContainer.topAnchor.constraint(equalTo: keySectionLabel.bottomAnchor, constant: 10),
+            keyFieldContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            keyFieldContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            keyFieldContainer.heightAnchor.constraint(equalToConstant: 52),
+
+            keyTextField.leadingAnchor.constraint(equalTo: keyFieldContainer.leadingAnchor, constant: 16),
             keyTextField.centerYAnchor.constraint(equalTo: keyFieldContainer.centerYAnchor),
             keyTextField.trailingAnchor.constraint(equalTo: pasteKeyButton.leadingAnchor, constant: -8),
 
-            pasteKeyButton.trailingAnchor.constraint(equalTo: keyFieldContainer.trailingAnchor, constant: -12),
+            pasteKeyButton.trailingAnchor.constraint(equalTo: keyFieldContainer.trailingAnchor, constant: -14),
             pasteKeyButton.centerYAnchor.constraint(equalTo: keyFieldContainer.centerYAnchor),
             pasteKeyButton.widthAnchor.constraint(equalToConstant: 44),
 
-            activateButton.topAnchor.constraint(equalTo: keyFieldContainer.bottomAnchor, constant: 16),
-            activateButton.leadingAnchor.constraint(equalTo: cardContainer.leadingAnchor, constant: 16),
-            activateButton.trailingAnchor.constraint(equalTo: cardContainer.trailingAnchor, constant: -16),
-            activateButton.heightAnchor.constraint(equalToConstant: 48),
+            // Status Label (Warning)
+            statusLabel.topAnchor.constraint(equalTo: keyFieldContainer.bottomAnchor, constant: 12),
+            statusLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 22),
+            statusLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -22),
+
+            // Activate Button
+            activateButton.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 14),
+            activateButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            activateButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            activateButton.heightAnchor.constraint(equalToConstant: 52),
 
             activityIndicator.centerYAnchor.constraint(equalTo: activateButton.centerYAnchor),
-            activityIndicator.trailingAnchor.constraint(equalTo: activateButton.trailingAnchor, constant: -16),
+            activityIndicator.trailingAnchor.constraint(equalTo: activateButton.trailingAnchor, constant: -18),
 
-            statusLabel.topAnchor.constraint(equalTo: activateButton.bottomAnchor, constant: 12),
-            statusLabel.leadingAnchor.constraint(equalTo: cardContainer.leadingAnchor, constant: 16),
-            statusLabel.trailingAnchor.constraint(equalTo: cardContainer.trailingAnchor, constant: -16),
-            statusLabel.bottomAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: -16),
-
-            langButton.topAnchor.constraint(equalTo: cardContainer.bottomAnchor, constant: 16),
+            // Language Pill
+            langButton.topAnchor.constraint(equalTo: activateButton.bottomAnchor, constant: 22),
             langButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            langButton.widthAnchor.constraint(equalToConstant: 130),
+            langButton.heightAnchor.constraint(equalToConstant: 36),
             langButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
         ])
     }
@@ -284,12 +416,13 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
         statusLabel.textColor = Theme.success
-        statusLabel.text = "✓ Đã sao chép mã HWID vào bộ nhớ tạm!"
+        statusLabel.text = "✓ Đã sao chép mã HWID thiết bị vào bộ nhớ tạm!"
     }
 
     @objc private func handlePasteKey() {
         if let clip = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines) {
             keyTextField.text = clip
+            statusLabel.text = ""
             let feedback = UIImpactFeedbackGenerator(style: .light)
             feedback.impactOccurred()
         }
@@ -297,8 +430,8 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
 
     @objc private func handleActivate() {
         guard let key = keyTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty else {
-            statusLabel.textColor = Theme.danger
-            statusLabel.text = "Vui lòng nhập mã Key VIP của bạn!"
+            statusLabel.textColor = UIColor(red: 0.97, green: 0.44, blue: 0.49, alpha: 1.0)
+            statusLabel.text = "⚠️ Vui lòng nhập khóa giấy phép của bạn!"
             return
         }
 
@@ -306,7 +439,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
         activateButton.setEnabledStyle(false)
         activityIndicator.startAnimating()
         statusLabel.textColor = Theme.textSub
-        statusLabel.text = "Đang kết nối server & xác thực thiết bị..."
+        statusLabel.text = "Đang kết nối máy chủ & kích hoạt giấy phép..."
 
         APIService.shared.validateKey(key: key) { [weak self] success, err, licenseInfo in
             guard let self = self else { return }
@@ -317,7 +450,7 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.success)
                 self.statusLabel.textColor = Theme.success
-                self.statusLabel.text = "✓ Xác thực thành công! Đang vào ứng dụng..."
+                self.statusLabel.text = "✓ Kích hoạt thành công! Đang vào ứng dụng..."
 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                     let mainVC = MainViewController(key: key, licenseInfo: info)
@@ -328,8 +461,9 @@ public final class LoginViewController: UIViewController, UITextFieldDelegate {
             } else {
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.error)
-                self.statusLabel.textColor = Theme.danger
-                self.statusLabel.text = "✕ \(err ?? "Key không hợp lệ hoặc đã hết hạn!")"
+                self.statusLabel.textColor = UIColor(red: 0.97, green: 0.44, blue: 0.49, alpha: 1.0)
+                let message = err ?? "Khóa không hợp lệ hoặc đã hết hạn."
+                self.statusLabel.text = "⚠️ \(message)"
             }
         }
     }
