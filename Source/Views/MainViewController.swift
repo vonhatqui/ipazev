@@ -1,7 +1,7 @@
 import UIKit
 
 /// Màn hình điều khiển chính ZevCheatiOS chuẩn phong cách Aurora với hệ thống Tab, Terminal ma trận & Camouflage
-public final class MainViewController: UIViewController, UIDocumentPickerDelegate {
+public final class MainViewController: UIViewController {
 
     private let key: String
     private let licenseInfo: [String: Any]
@@ -35,7 +35,6 @@ public final class MainViewController: UIViewController, UIDocumentPickerDelegat
     private let featuresStack = UIStackView()
     private var cardViews: [FeatureCardView] = []
     private let injectButton = NeonButton(title: "⚡ INJECT VÀO GAME NGAY")
-    private let localFileButton = NeonButton(title: "📂 NẠP FILE TỰ CHỌN TỪ IPHONE")
 
     // Terminal
     private var activeTerminal: TerminalView?
@@ -236,10 +235,6 @@ public final class MainViewController: UIViewController, UIDocumentPickerDelegat
         injectButton.addTarget(self, action: #selector(handleInjectTapped), for: .touchUpInside)
         featuresPage.addSubview(injectButton)
 
-        localFileButton.translatesAutoresizingMaskIntoConstraints = false
-        localFileButton.addTarget(self, action: #selector(handlePickLocalFile), for: .touchUpInside)
-        featuresPage.addSubview(localFileButton)
-
         NSLayoutConstraint.activate([
             featuresPage.topAnchor.constraint(equalTo: tabContainer.topAnchor),
             featuresPage.leadingAnchor.constraint(equalTo: tabContainer.leadingAnchor),
@@ -259,12 +254,7 @@ public final class MainViewController: UIViewController, UIDocumentPickerDelegat
             injectButton.leadingAnchor.constraint(equalTo: featuresPage.leadingAnchor),
             injectButton.trailingAnchor.constraint(equalTo: featuresPage.trailingAnchor),
             injectButton.heightAnchor.constraint(equalToConstant: 50),
-
-            localFileButton.topAnchor.constraint(equalTo: injectButton.bottomAnchor, constant: 12),
-            localFileButton.leadingAnchor.constraint(equalTo: featuresPage.leadingAnchor),
-            localFileButton.trailingAnchor.constraint(equalTo: featuresPage.trailingAnchor),
-            localFileButton.heightAnchor.constraint(equalToConstant: 50),
-            localFileButton.bottomAnchor.constraint(equalTo: featuresPage.bottomAnchor, constant: -10)
+            injectButton.bottomAnchor.constraint(equalTo: featuresPage.bottomAnchor, constant: -10)
         ])
     }
 
@@ -657,89 +647,7 @@ public final class MainViewController: UIViewController, UIDocumentPickerDelegat
         }
     }
 
-    // MARK: - Chế độ Nạp File Thủ Công từ iPhone (Tích hợp lõi an toàn 3105)
-    @objc private func handlePickLocalFile() {
-        let picker: UIDocumentPickerViewController
-        if #available(iOS 14.0, *) {
-            picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item, .data, .content], asCopy: true)
-        } else {
-            picker = UIDocumentPickerViewController(documentTypes: ["public.item", "public.data"], in: .import)
-        }
-        picker.delegate = self
-        picker.allowsMultipleSelection = false
-        present(picker, animated: true)
-    }
 
-    public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        guard let sourceURL = urls.first else { return }
-        let fileName = sourceURL.lastPathComponent
-        let targetGame = selectedBundleId == "com.dts.freefireth" ? "Free Fire" : "Free Fire MAX"
-
-        let actionSheet = UIAlertController(
-            title: "📂 Nạp Tệp Vào Game: \(fileName)",
-            message: "Chọn vị trí bạn muốn nạp file vào Documents của \(targetGame) (sử dụng lõi thay thế an toàn 3105):",
-            preferredStyle: .actionSheet
-        )
-
-        actionSheet.addAction(UIAlertAction(title: "1. Thư mục gốc Documents/ (VD: \(fileName))", style: .default) { [weak self] _ in
-            self?.executeLocalInjection(sourceURL: sourceURL, relativePath: "Documents/\(fileName)")
-        })
-
-        actionSheet.addAction(UIAlertAction(title: "2. Documents/aim-cache.bin (Aim Lock Engine)", style: .default) { [weak self] _ in
-            self?.executeLocalInjection(sourceURL: sourceURL, relativePath: "Documents/aim-cache.bin")
-        })
-
-        actionSheet.addAction(UIAlertAction(title: "3. Thư mục Avatar Bundles (Mod Skin / Res)", style: .default) { [weak self] _ in
-            self?.executeLocalInjection(sourceURL: sourceURL, relativePath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/\(fileName)")
-        })
-
-        actionSheet.addAction(UIAlertAction(title: "4. Documents/Assembly-CSharp-patch.bytes", style: .default) { [weak self] _ in
-            self?.executeLocalInjection(sourceURL: sourceURL, relativePath: "Documents/Assembly-CSharp-patch.bytes")
-        })
-
-        actionSheet.addAction(UIAlertAction(title: "Hủy bỏ", style: .cancel))
-
-        if let popover = actionSheet.popoverPresentationController {
-            popover.sourceView = localFileButton
-            popover.sourceRect = localFileButton.bounds
-        }
-        present(actionSheet, animated: true)
-    }
-
-    private func executeLocalInjection(sourceURL: URL, relativePath: String) {
-        let term = TerminalView(frame: view.bounds)
-        activeTerminal = term
-        term.present(in: view)
-
-        let targetGame = selectedBundleId == "com.dts.freefireth" ? "Free Fire" : "Free Fire MAX"
-        term.queueLogs([
-            "[*] Bắt đầu quy trình nạp tệp thủ công qua lõi 3105...",
-            "[+] Tệp nguồn: \(sourceURL.lastPathComponent)",
-            "[+] Đích đến: \(relativePath)",
-            "[+] Game mục tiêu: \(targetGame) (\(selectedBundleId))",
-            "[*] Kích hoạt MobileContainerManager (mcm_bridge)..."
-        ])
-
-        DispatchQueue.global().asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            guard let self = self else { return }
-            do {
-                let finalPath = try FileReplacer.shared.injectLocalFile(
-                    sourceURL: sourceURL,
-                    bundleId: self.selectedBundleId,
-                    relativePath: relativePath
-                )
-                term.queueLogs([
-                    "[✓] Thay thế an toàn bằng thuật toán 3105 (atomic staging): THÀNH CÔNG!",
-                    "[✓] Vị trí file thực tế: \(finalPath)",
-                    "[★] HOÀN TẤT NẠP TỆP VÀO DOCUMENTS CỦA GAME!"
-                ])
-            } catch {
-                term.queueLogs([
-                    "[!] Lỗi khi nạp tệp: \(error.localizedDescription)"
-                ])
-            }
-        }
-    }
 
     @objc private func handleInstallDNS() {
         let mobileconfigUrlStr = "\(APIService.shared.baseURL)/api.php?action=mobileconfig"
